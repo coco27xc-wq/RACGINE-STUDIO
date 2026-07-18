@@ -37,10 +37,10 @@
     font-family: 'Cormorant Garamond', 'Prompt', serif;
   }
 
-/* --- Custom Cursor & ละอองใบไม้ (Particle Trail) --- */
+
   .cursor {
     width: 12px; height: 12px;
-    background: var(--navy); /* ⭐️ เปลี่ยนเป็นสีน้ำเงินกรมท่า */
+    background: var(--navy); 
     border-radius: 2px 50% 50% 50%;
     position: fixed;
     top: 0; left: 0;
@@ -62,21 +62,21 @@
     transition: left 0.12s var(--transition), top 0.12s var(--transition), width 0.3s var(--transition), height 0.3s var(--transition), opacity 0.3s;
     opacity: 0.5;
   }
-  /* เมื่อเอาเมาส์ชี้ปุ่ม ให้กลายเป็นวงกลมใหญ่ขึ้น */
+  
   .cursor.hover { 
     width: 24px; height: 24px; 
     border-radius: 50%; 
-    background: var(--accent); /* ⭐️ ทริค: คงสีทองไว้ตอนชี้ปุ่ม จะได้ตัดกับสีปุ่มที่เป็นสีน้ำเงิน */
+    background: var(--accent);
     transform: translate(-50%, -50%) rotate(0deg); 
   }
   .cursor-ring.hover { width: 60px; height: 60px; opacity: 0.2; }
 
-  /* ดีไซน์ของละอองที่ร่วงตามหลัง */
+
   .particle {
     position: fixed;
     top: 0; left: 0;
     width: 8px; height: 8px;
-    background: var(--accent); /* ⭐️ เปลี่ยนละอองเป็นสีทอง */
+    background: var(--accent);
     border-radius: 0 50% 50% 50%;
     pointer-events: none;
     z-index: 99997;
@@ -85,7 +85,7 @@
     animation: fallFade 3s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   
-  /* แอนิเมชันร่วง กระจายออก และเฟดหายไป */
+ 
   @keyframes fallFade {
     0% { 
       opacity: 0.8; 
@@ -97,7 +97,6 @@
     }
   }
 
-  /* Navbar */
   nav {
     position: fixed; top: 0; left: 0; right: 0;
     z-index: 1000;
@@ -140,7 +139,6 @@
   .nav-links a:hover { color: var(--navy); }
   .nav-links a:hover::after { width: 100%; }
 
-  /* Hero */
   #home {
     min-height: 100vh;
     display: flex; align-items: center;
@@ -296,7 +294,6 @@
   }
   .section-title em { font-style: italic; color: var(--accent); }
 
-  /* Services */
   #services { background: var(--navy); position: relative; overflow: hidden; }
   #services .section-label { color: var(--accent); }
   #services .section-label::before { background: var(--accent); }
@@ -373,29 +370,26 @@
     transition: transform 0.4s var(--transition), opacity 0.4s;
   }
 
-  /* ตกแต่งรูปภาพเบื้องหลังของการ์ดบริการ */
 .service-image {
     position: absolute;
     inset: 0;
     z-index: 0;
-    /*opacity: 0.15; /* ปรับให้ภาพจางลงเพื่อให้อ่านข้อความง่าย */
     transition: transform 0.6s var(--transition), opacity 0.6s;
 }
 
 .service-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* ให้ภาพคลุมทั่วพื้นที่การ์ด */
+    object-fit: cover; 
 }
 
-/* เอฟเฟกต์เมื่อเอาเมาส์ชี้ (Hover) */
+
 .service-card:hover .service-image {
-    transform: scale(1.1); /* ขยายภาพนิดๆ */
-    opacity: 0.3; /* ให้ภาพชัดขึ้นเล็กน้อย */
+    transform: scale(1.1);
+    opacity: 0.3;
 }
   .service-card:hover .service-arrow { transform: translateX(0); opacity: 1; }
 
-  /* Portfolio */
   #portfolio { padding-bottom: 80px; }
   .portfolio-header {
     display: flex; align-items: flex-end; justify-content: space-between;
@@ -442,32 +436,28 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* --- แก้ไขระบบ Grid --- */
   .portfolio-grid {
     display: grid;
     gap: 20px;
     align-items: start; 
   }
   
-  /* Layout 1: เรียง 3 รูป (แบ่ง 3 คอลัมน์) สำหรับ Character Design แนวตั้ง */
   .portfolio-grid.layout-1 { grid-template-columns: repeat(3, 1fr); }
   
-  /* Layout 2: แบ่ง 3 คอลัมน์เท่าๆ กัน */
   .portfolio-grid.layout-2 { grid-template-columns: repeat(3, 1fr); } 
   
-  /* Layout 3: แบ่ง 2 คอลัมน์เท่าๆ กัน สำหรับแนวนอน */
   .portfolio-grid.layout-half { grid-template-columns: 1fr 1fr; }
 
   .portfolio-item {
     position: relative; 
     overflow: hidden;
-    background: var(--cream-dark); /* สีพื้นหลังของกรอบ */
+    background: var(--cream-dark);
     cursor: none;
-    border-radius: 12px; /* เพิ่มความโค้งมนของกรอบให้ดูละมุนขึ้น */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* เพิ่มเงาให้กรอบดูมีมิติเหมือนในภาพตัวอย่าง */
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   }
 
-  /* --- แก้ไขการจัดการรูปภาพ & Aspect Ratio --- */
+
   .portfolio-thumb {
     width: 100%; 
     position: relative;
@@ -475,34 +465,32 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffffff; /* สีพื้นหลังหลังรูปภาพ (เผื่อรูปเป็น PNG ใส) */
+    background: #ffffff;
   }
 
-  /* ⭐️ กำหนดสัดส่วนภาพแยกตามหมวดหมู่ ⭐️ */
-  
-  /* 1. Character Design (แนวตั้ง) */
+
   #panel-char .layout-1 .portfolio-thumb {
-      aspect-ratio: 3 / 4; /* สัดส่วนแนวตั้ง */
+      aspect-ratio: 3 / 4; 
   }
   
-  /* 2. Character Design (แนวนอนด้านล่าง) & Background Design */
+
   #panel-char .layout-half .portfolio-thumb,
   #panel-bg .portfolio-thumb {
-      aspect-ratio: 16 / 9; /* สัดส่วนแนวนอน */
+      aspect-ratio: 16 / 9; 
   }
 
-  /* 3. Prop Design (กรอบสี่เหลี่ยมแนวนอน) */
+
   #panel-prop .portfolio-thumb {
-      aspect-ratio: 4 / 3; /* สัดส่วนสี่เหลี่ยมผืนผ้า (จอคอม) ให้คล้ายในภาพตัวอย่าง */
-      padding: 20px; /* เพิ่ม Padding ให้รูป Prop ไม่ชิดขอบกรอบเกินไป */
+      aspect-ratio: 4 / 3; 
+      padding: 20px;
   }
 
-  /* 4. Chibi Art (สี่เหลี่ยมจัตุรัส) */
+
   #panel-chibi .portfolio-thumb {
       aspect-ratio: 1 / 1;
   }
 
-  /* 5. Typo (แนวนอน) */
+
   #panel-typo .portfolio-thumb {
       aspect-ratio: 16 / 9;
   }
@@ -510,16 +498,16 @@
   .portfolio-thumb img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* ทำให้รูปพอดีกรอบ ไม่ยืด ไม่เบี้ยว */
+    object-fit: cover;
     transition: transform 0.5s var(--transition); 
   }
   
-  /* พิเศษสำหรับ Prop Design: ให้รูปอยู่ตรงกลางกรอบ ไม่ถูกตัด (contain) */
+
   #panel-prop .portfolio-thumb img {
       object-fit: contain; 
   }
 
-  /* เพิ่ม Effect ขยายภาพนิดๆ ตอนเอาเมาส์ชี้ */
+
   .portfolio-item:hover .portfolio-thumb img {
       transform: scale(1.05);
   }
@@ -552,7 +540,7 @@
   }
   .portfolio-item:hover .portfolio-overlay p { transform: translateY(0); }
 
-  /* Contact */
+ 
   #contact {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -608,7 +596,6 @@
   .form-group textarea { min-height: 100px; }
   .form-group select { appearance: none; -webkit-appearance: none; }
 
-  /* Pricing */
   #pricing {
     background: var(--cream-dark);
     text-align: center;
@@ -746,7 +733,6 @@
   }
   .price-card.featured .btn-card::before { background: var(--accent); }
 
-  /* Footer */
   footer {
     background: var(--navy);
     padding: 60px 60px 40px;
@@ -785,7 +771,6 @@
   }
   .footer-links a:hover { color: var(--accent); }
 
-  /* Scroll animations */
   .reveal {
     opacity: 0;
     transform: translateY(40px);
@@ -805,7 +790,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Mobile */
+
   @media (max-width: 900px) {
     nav, section, footer { padding-left: 28px; padding-right: 28px; }
     nav.scrolled { padding-left: 28px; padding-right: 28px; }
@@ -824,7 +809,7 @@
     
     .pricing-panel.active { grid-template-columns: 1fr; }
 
-    /* ⭐️ จัดระเบียบหน้า Pricing ให้การ์ดทั้ง 2 ใบอยู่กึ่งกลางจอ ⭐️ */
+
     #pricing-individual.active, #pricing-package.active {
       display: grid !important;
       grid-template-columns: 1fr !important;
@@ -838,7 +823,7 @@
     .cursor, .cursor-ring { display: none; }
   }
 
-  /* ⭐️ จัดระเบียบหน้า Pricing Desktop ⭐️ */
+
   #pricing-individual.active, #pricing-package.active {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(320px, 480px)) !important;
@@ -847,7 +832,7 @@
     margin: 0 auto;
   }
 
-  /* --- ปุ่มแว่นขยายดูภาพเต็ม --- */
+
   .zoom-btn {
     position: absolute;
     top: 30px; right: 30px;
@@ -861,7 +846,7 @@
     opacity: 0;
     transform: scale(0.8);
     transition: all 0.4s var(--transition);
-    z-index: 10; /* ให้อยู่เหนือลิงก์ */
+    z-index: 10;
   }
   .service-card:hover .zoom-btn {
     opacity: 1;
@@ -874,13 +859,13 @@
     transform: scale(1.1) !important;
   }
 
-  /* --- หน้าต่างดูภาพ (Lightbox Overlay) --- */
+ 
   .lightbox-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(17, 34, 64, 0.95);
     backdrop-filter: blur(8px);
-    z-index: 9000; /* อยู่ใต้ Custom Cursor แต่เหนือเว็บ */
+    z-index: 9000;
     display: flex; align-items: center; justify-content: center;
     opacity: 0; pointer-events: none;
     transition: opacity 0.4s var(--transition);
