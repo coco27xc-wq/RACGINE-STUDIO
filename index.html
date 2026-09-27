@@ -1499,7 +1499,6 @@
     }
   });
 
-  // ⭐️ วงแหวนวิ่งตามหลังเคอร์เซอร์หยดน้ำ ⭐️
   function animateRing() {
     ringX += (mouseX - ringX) * 0.12;
     ringY += (mouseY - ringY) * 0.12;
@@ -1534,7 +1533,6 @@
     }, 1000);
   }
 
-  // ⭐️ อัปเดตเมาส์ให้ขยายเมื่อชี้ปุ่มซูมและปุ่มปิดรูป ⭐️
   document.querySelectorAll('a, button, .portfolio-item, .service-card, .price-card, input, textarea, select, .zoom-btn, .lightbox-close').forEach(el => {
     el.addEventListener('mouseenter', () => {
       cursor.classList.add('hover');
@@ -1618,15 +1616,14 @@
     });
   });
 
-  // --- ⭐️ ระบบ Lightbox (คลิกแว่นขยายดูภาพขยาย) ⭐️ ---
   const lightbox = document.getElementById('image-lightbox');
   const lightboxImg = document.getElementById('lightbox-img');
   const lightboxClose = document.getElementById('lightbox-close');
 
   document.querySelectorAll('.zoom-btn').forEach(btn => {
     btn.addEventListener('click', e => {
-      e.preventDefault();   // ป้องกันหน้าเว็บเลื่อน
-      e.stopPropagation();  // ⭐️ สำคัญ: ดักไม่ให้ลิงก์ <a> ที่ครอบการ์ดอยู่ทำงาน
+      e.preventDefault();  
+      e.stopPropagation(); 
       
       const imgSrc = btn.getAttribute('data-img');
       if (imgSrc) {
