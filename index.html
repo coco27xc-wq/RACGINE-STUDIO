@@ -1,1658 +1,1314 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RACGINE STUDIO — Design Agency</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>OCS Fault Locator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
-
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
 <style>
-  :root {
-    --cream: #FDFBF7;
-    --cream-dark: #F5F1E8;
-    --navy: #112240;
-    --navy-light: #1e3a5f;
-    --navy-muted: #4a6080;
-    --accent: #C8A96E;
-    --accent-light: #E8D5A8;
-    --text: #112240;
-    --transition: cubic-bezier(0.4, 0, 0.2, 1);
-  }
+/* Layout: formal sidebar + content (desktop >=1200), sticky top bar with scrolling nav (tablet/mobile). Section order unchanged. */
+:root{
+  --bg:#f4f2f2;--surface:#ffffff;--sunk:#f7f5f5;--ink:#1c1819;--mut:#675e60;--line:#e5e0e0;--line2:#cdc5c6;--grid:#ece8e8;
+  --brand:#b3121c;--brand-hover:#970e17;--brand-deep:#6f0a11;--brand-ink:#b3121c;--tint:#fbeded;
+  --gold:#b58a26;--pin:#e6a919;
+  --ok:#1f7a45;--warn:#a86f00;--bad:#c0262d;--okbg:#e6f4ec;--warnbg:#fff4d9;--badbg:#fbe9ea;
+  --rn:#b3121c;--rw:#e8939b;
+  --font-body:"IBM Plex Sans Thai","Noto Sans Thai",Tahoma,system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#110e0f;--surface:#191516;--sunk:#221c1d;--ink:#f0ebeb;--mut:#a69c9e;--line:#2e2728;--line2:#463d3e;--grid:#241e1f;
+  --brand:#c8202b;--brand-hover:#dd3540;--brand-deep:#ffb3b8;--brand-ink:#f27f87;--tint:#2b1618;
+  --gold:#d9b25a;--pin:#f2bd3d;
+  --ok:#4cc07f;--warn:#e8b23a;--bad:#f2707a;--okbg:#14291d;--warnbg:#2c2410;--badbg:#2e1719;
+  --rn:#e5434d;--rw:#f0a3aa;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#110e0f;--surface:#191516;--sunk:#221c1d;--ink:#f0ebeb;--mut:#a69c9e;--line:#2e2728;--line2:#463d3e;--grid:#241e1f;
+  --brand:#c8202b;--brand-hover:#dd3540;--brand-deep:#ffb3b8;--brand-ink:#f27f87;--tint:#2b1618;
+  --gold:#d9b25a;--pin:#f2bd3d;
+  --ok:#4cc07f;--warn:#e8b23a;--bad:#f2707a;--okbg:#14291d;--warnbg:#2c2410;--badbg:#2e1719;
+  --rn:#e5434d;--rw:#f0a3aa;color-scheme:dark}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--font-body)}
+button,input,select,textarea{font-family:inherit}
+:focus-visible{outline:2px solid var(--brand-ink);outline-offset:2px}
 
-  html { scroll-behavior: smooth; }
+/* ---------- app frame ---------- */
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;background:var(--surface);border-right:1px solid var(--line);
+  padding:22px 14px 18px max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:22px;overflow-y:auto}
+.brand{display:flex;gap:11px;align-items:center}
+.bm{width:36px;height:36px;border-radius:6px;background:var(--brand);color:#fff;display:grid;place-items:center;flex:none}
+.bm svg{width:20px;height:20px}
+.brand b{display:block;font-size:16px;font-weight:600;line-height:1.25}
+.brand small{display:block;color:var(--mut);font-size:12.5px;line-height:1.3}
+.nav{display:grid;gap:2px}
+.nav p{margin:14px 10px 4px;font-size:11.5px;letter-spacing:.06em;color:var(--mut)}
+.nav a{display:flex;gap:10px;align-items:center;min-height:40px;padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:14px;white-space:nowrap}
+.nav a svg{width:17px;height:17px;flex:none;color:var(--mut)}
+.nav a:hover{background:var(--sunk)}
+.nav a.on{background:var(--tint);color:var(--brand-ink);box-shadow:inset 2px 0 0 var(--brand)}
+.nav a.on svg{color:var(--brand-ink)}
+.sidefoot{margin-top:auto;color:var(--mut);font-size:12px;line-height:1.5}
 
-  body {
-    font-family: 'DM Sans', 'Prompt', sans-serif;
-    background: var(--cream);
-    color: var(--navy);
-    overflow-x: hidden;
-    cursor: none;
-  }
+.main{min-width:0;width:100%;max-width:1320px;padding-block:28px 40px;
+  padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px));
+  display:grid;gap:20px;align-content:start}
+.top{display:flex;flex-wrap:wrap;gap:14px 24px;justify-content:space-between;align-items:flex-end;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.top>div{min-width:0}
+.eyebrow{margin:0;font-size:12.5px;font-weight:500;letter-spacing:.04em;color:var(--brand-ink)}
+h1{margin:4px 0 0;font-size:clamp(23px,3.2vw,30px);font-weight:600;letter-spacing:-.01em;line-height:1.25;text-wrap:balance}
+.lead{margin:6px 0 0;color:var(--mut);font-size:14px;max-width:64ch}
+.status{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{display:flex;gap:8px;align-items:center;padding:7px 12px;border:1px solid var(--line2);border-radius:6px;background:var(--surface);font:500 13px var(--font-num);white-space:nowrap}
+.led{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.chip.trip{border-color:var(--brand);color:var(--brand-ink);background:var(--tint)}
+.chip.trip .led{background:var(--brand)}
+.clock{padding:7px 12px;font:500 13px var(--font-num);color:var(--mut);white-space:nowrap}
 
-  h1, h2, h3, .nav-logo, .hero-title, .section-title, .service-name, .price-name, .price-tag, .contact-info-value {
-    font-family: 'Cormorant Garamond', 'Prompt', serif;
-  }
+/* ---------- panels ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;min-width:0}
+h2{margin:0 0 14px;font-size:15.5px;font-weight:600;display:flex;align-items:center;gap:10px;line-height:1.35}
+.ib{width:26px;height:26px;border-radius:5px;background:var(--brand);color:#fff;display:grid;place-items:center;flex:none}
+.ib svg{width:15px;height:15px}
+.kpi{display:grid;gap:14px}.kpi h2{margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:14px 0}
+.st{padding-left:14px;border-left:1px solid var(--line);min-width:0}
+.st span{display:block;font-size:12px;color:var(--mut)}
+.st b{display:block;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;line-height:1.4}
+.v.ok{color:var(--ok)}.v.warn{color:var(--warn)}.v.bad{color:var(--bad)}
 
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+.stack{display:grid;gap:20px;min-width:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+.pmgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
 
-  .cursor {
-    width: 12px; height: 12px;
-    background: var(--navy); 
-    border-radius: 2px 50% 50% 50%;
-    position: fixed;
-    top: 0; left: 0;
-    pointer-events: none;
-    z-index: 99999;
-    transform: translate(-50%, -50%) rotate(-45deg);
-    transition: width 0.3s var(--transition), height 0.3s var(--transition), border-radius 0.3s, background 0.3s, transform 0.2s;
-    mix-blend-mode: multiply;
-  }
-  .cursor-ring {
-    width: 36px; height: 36px;
-    border: 1.5px solid var(--navy);
-    border-radius: 50%;
-    position: fixed;
-    top: 0; left: 0;
-    pointer-events: none;
-    z-index: 99998;
-    transform: translate(-50%, -50%);
-    transition: left 0.12s var(--transition), top 0.12s var(--transition), width 0.3s var(--transition), height 0.3s var(--transition), opacity 0.3s;
-    opacity: 0.5;
-  }
-  
-  .cursor.hover { 
-    width: 24px; height: 24px; 
-    border-radius: 50%; 
-    background: var(--accent);
-    transform: translate(-50%, -50%) rotate(0deg); 
-  }
-  .cursor-ring.hover { width: 60px; height: 60px; opacity: 0.2; }
+/* ---------- controls ---------- */
+.seg{display:grid;gap:8px}
+.seg button{display:grid;grid-template-columns:12px 1fr;gap:12px;text-align:left;background:var(--surface);color:var(--ink);border:1px solid var(--line2);border-radius:6px;padding:11px 13px;font:inherit;cursor:pointer;min-height:48px}
+.seg button:hover{border-color:var(--ink)}
+.seg button[aria-pressed=true]{border-color:var(--brand);background:var(--tint);box-shadow:inset 0 0 0 1px var(--brand)}
+.seg .dot{width:12px;height:12px;border-radius:50%;margin-top:6px}
+.seg .sub{display:block;color:var(--mut);font-size:13px;line-height:1.45}
+label{display:block;font-size:13.5px;font-weight:500;margin-bottom:5px}
+.kmrow{display:flex;gap:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+input[type=number],input[type=text],select{width:100%;min-width:0;min-height:44px;padding:9px 12px;font:500 16px var(--font-num);color:var(--ink);background:var(--surface);border:1px solid var(--line2);border-radius:6px}
+input[type=text],select{font:400 15px var(--font-body)}
+input:focus,select:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px var(--tint)}
+input[type=range]{width:100%;margin:14px 0 0;height:30px;accent-color:var(--brand);cursor:pointer}
+.go,a.btn,button.btn,button.copy,button.reset{cursor:pointer;font:500 14px var(--font-body);text-decoration:none;border-radius:6px;text-align:center;line-height:1.3}
+.go{padding:10px 18px;min-height:44px;color:#fff;background:var(--brand);border:1px solid var(--brand);flex:none}
+.go:hover,a.btn:hover,button.btn:hover{background:var(--brand-hover);border-color:var(--brand-hover)}
+a.btn,button.btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;min-height:40px;color:#fff;background:var(--brand);border:1px solid var(--brand)}
+a.btn.alt,button.btn.alt,button.reset,button.copy{background:var(--surface);color:var(--ink);border:1px solid var(--line2)}
+a.btn.alt:hover,button.btn.alt:hover,button.reset:hover,button.copy:hover{background:var(--sunk);border-color:var(--ink)}
+button.copy{padding:5px 12px;min-height:34px;font-size:13px}
+button.reset{margin-top:14px;padding:8px 14px;min-height:40px}
+.hint{color:var(--mut);font-size:12.5px;line-height:1.55;margin:10px 0 0}
+.tag{font-size:12px;color:var(--mut);font-weight:400}
+.routelinks,.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.manual{width:100%;margin-top:8px;padding:8px;font:13px var(--font-num);background:var(--sunk);border:1px solid var(--line);border-radius:6px;color:var(--ink)}
+.empty{color:var(--mut);margin:4px 0 0}
+details summary{cursor:pointer;font-weight:500}
+details p{margin:8px 0 0;font-size:14px;color:var(--mut);max-width:68ch}
 
+/* ---------- map ---------- */
+.mapbox{padding:10px;background:linear-gradient(var(--grid) 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/32px 32px,var(--sunk)}
+.mapbox svg{display:block;width:100%;height:auto;cursor:crosshair}
+.cap{margin:6px 4px 0;color:var(--mut);font-size:12.5px}
+#ov{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+#ov:empty{display:none}
+.oc{flex:1 1 200px;min-width:0;background:var(--surface);border:1px solid var(--line2);border-radius:6px;padding:8px 12px}
+.oc span{display:block;font-size:12px;color:var(--mut)}
+.oc b{display:block;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+.oc small{display:block;font-size:12px;color:var(--mut);overflow-wrap:anywhere}
+.oc.b{background:var(--brand);border-color:var(--brand);color:#fff}
+.oc.b span,.oc.b small{color:rgba(255,255,255,.82)}
+.track{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.trail{fill:none;stroke:var(--ink);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.band{fill:none;stroke:var(--pin);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;opacity:.5}
+.stn{fill:var(--surface);stroke:var(--ink);stroke-width:2.5}
+.stn.lit{fill:var(--pin)}
+.train{fill:var(--ink);stroke:var(--surface);stroke-width:2.5}
+.lbl{font:12.5px var(--font-body);fill:var(--ink);paint-order:stroke;stroke:var(--sunk);stroke-width:3px}
+.lbl .k{font:11px var(--font-num);fill:var(--mut)}
+.pin-halo{fill:var(--pin);opacity:.3}
+.ring{fill:none;stroke:var(--brand);stroke-width:2;opacity:0}
+.pin{fill:var(--pin);stroke:var(--brand);stroke-width:3}
+.pin-lbl{font:600 12px var(--font-num);fill:var(--ink);paint-order:stroke;stroke:var(--sunk);stroke-width:4px;stroke-linejoin:round}
 
-  .particle {
-    position: fixed;
-    top: 0; left: 0;
-    width: 8px; height: 8px;
-    background: var(--accent);
-    border-radius: 0 50% 50% 50%;
-    pointer-events: none;
-    z-index: 99997;
-    opacity: 0.8;
-    transform: translate(-50%, -50%);
-    animation: fallFade 3s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-  
- 
-  @keyframes fallFade {
-    0% { 
-      opacity: 0.8; 
-      transform: translate(-50%, -50%) scale(1) rotate(0deg); 
-    }
-    100% { 
-      opacity: 0; 
-      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0) rotate(var(--drot)); 
-    }
-  }
+.result{border-radius:8px;padding:18px 20px;display:grid;gap:4px;font-size:14px;min-width:0}
+.result.ok{background:var(--brand);color:#fff}
+.result.err{background:var(--warnbg);border:1px solid var(--warn);color:var(--ink)}
+.result .big{font-size:17px;font-weight:600}
+.result .num{font:600 26px var(--font-num);line-height:1.2}
+.result b.num{font-size:15px}
+.result.ok .big .num{display:inline-block}
+.result div{overflow-wrap:anywhere}
+.result.ok .hint{color:rgba(255,255,255,.8)}
+.result .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.result.ok .btn{background:#fff;color:#8f0f17;border-color:#fff}
+.result.ok .btn:hover{background:#fbeded}
+.result.ok .btn.alt{background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
+.result.ok .btn.alt:hover{background:rgba(255,255,255,.12);border-color:#fff}
 
-  nav {
-    position: fixed; top: 0; left: 0; right: 0;
-    z-index: 1000;
-    padding: 28px 60px;
-    display: flex; align-items: center; justify-content: space-between;
-    transition: padding 0.4s var(--transition), background 0.4s var(--transition), box-shadow 0.4s;
-  }
-  nav.scrolled {
-    padding: 18px 60px;
-    background: rgba(253, 251, 247, 0.92);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 1px 0 rgba(17,34,64,0.08);
-  }
-  .nav-logo {
-    font-size: 1.6rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--navy);
-    text-decoration: none;
-  }
-  .nav-logo span { color: var(--accent); }
-  .nav-links { display: flex; gap: 44px; list-style: none; }
-  .nav-links a {
-    text-decoration: none;
-    color: var(--navy-muted);
-    font-size: 0.85rem;
-    font-weight: 400;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    position: relative;
-    transition: color 0.3s;
-  }
-  .nav-links a::after {
-    content: '';
-    position: absolute; bottom: -4px; left: 0;
-    width: 0; height: 1px;
-    background: var(--accent);
-    transition: width 0.4s var(--transition);
-  }
-  .nav-links a:hover { color: var(--navy); }
-  .nav-links a:hover::after { width: 100%; }
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12.5px;font-weight:500;color:var(--mut)}
+th,td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+tbody tr:hover{background:var(--sunk)}
+td .en{display:block;color:var(--mut);font-size:12.5px}
+td.code,td.coord,td.mono{font:13px var(--font-num)}
+td.wrap{white-space:normal;min-width:170px}
+td a{color:var(--ink)}
+td input[type=number]{width:104px;min-height:38px;padding:6px 9px;font-size:14px}
 
-  #home {
-    min-height: 100vh;
-    display: flex; align-items: center;
-    padding: 120px 60px 80px;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero-bg-line {
-    position: absolute;
-    background: var(--navy);
-    opacity: 0.04;
-  }
-  .hero-bg-line.v1 { width: 1px; height: 80%; top: 10%; left: 30%; }
-  .hero-bg-line.v2 { width: 1px; height: 60%; top: 20%; right: 25%; }
-  .hero-bg-line.h1 { height: 1px; width: 40%; top: 65%; left: 5%; }
-  .hero-circle {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid var(--navy);
-    opacity: 0.05;
-  }
-  .hero-circle.c1 { width: 600px; height: 600px; top: -200px; right: -150px; }
-  .hero-circle.c2 { width: 300px; height: 300px; bottom: 50px; left: 20%; }
+/* ---------- analysis panels ---------- */
+.feat{background:var(--brand);color:#fff;border-radius:8px;padding:16px 16px 8px;margin-bottom:14px}
+.feat .ft span{font-size:13px;opacity:.85}
+.feat .ft b{display:block;font:600 38px/1.15 var(--font-body);font-variant-numeric:tabular-nums}
+.feat .ft small{opacity:.85;font-size:12.5px}
+.ch{display:block;width:100%;height:auto;margin-top:8px}
+.ch text{font:11px var(--font-num);fill:var(--mut)}
+.ch .ln{fill:none;stroke:var(--brand-ink);stroke-width:2.4}
+.ch .ar{fill:var(--brand-ink);opacity:.1}
+.ch .rf{stroke:var(--mut);stroke-dasharray:4 4;fill:none}
+.ch .bd{stroke:var(--brand-ink);stroke-dasharray:4 4;fill:none}
+.ch .mk{fill:var(--pin);stroke:var(--brand-ink);stroke-width:2}
+.feat .ch text{fill:rgba(255,255,255,.92)}
+.feat .ch .ln{stroke:#fff}
+.feat .ch .ar{fill:#fff;opacity:.16}
+.feat .ch .rf,.feat .ch .bd{stroke:rgba(255,255,255,.7)}
+.feat .ch .mk{fill:#fff;stroke:#6f0a11}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
+.tile{background:var(--sunk);border-radius:6px;padding:11px 12px;min-width:0}
+.tile span{display:block;font-size:12px;color:var(--mut)}
+.tile b{font:600 20px var(--font-body);font-variant-numeric:tabular-nums}
+.tile small{display:block;font-size:11.5px;color:var(--mut)}
+.vb{display:block;width:100%;height:auto;margin-top:12px}
+.vb text{font:10px var(--font-num);fill:var(--mut)}
+.vb .zb{fill:var(--bad);opacity:.8}.vb .zw{fill:var(--pin);opacity:.85}.vb .zg{fill:var(--ok);opacity:.8}
+.vb .vm{fill:var(--ink)}
+.vb .vt{fill:var(--ink);font-weight:600;font-size:11px}
+.gauges{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.gauge{background:var(--sunk);border-radius:6px;padding:10px 8px 8px;text-align:center;position:relative;min-width:0}
+.gauge svg{width:100%;height:auto;display:block}
+.gb{fill:none;stroke:var(--line2);stroke-width:10;stroke-linecap:round}
+.gf{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dasharray .5s,stroke .3s}
+.gsv.ok .gf{stroke:var(--ok)}.gsv.warn .gf{stroke:var(--pin)}.gsv.bad .gf{stroke:var(--bad)}
+.gv{position:absolute;left:0;right:0;top:34%;line-height:1.1}
+.gv b{font:600 22px var(--font-body)}
+.gv small{display:block;font-size:11px;color:var(--mut)}
+.gauge>span{display:block;font-size:12px;color:var(--mut)}
+.gauge i{font:600 12px var(--font-num);font-style:normal}
+.lv{display:inline-block;padding:4px 12px;border-radius:4px;font:600 12.5px var(--font-body);margin:14px 0 0;background:var(--sunk);color:var(--mut)}
+.lv.ok{background:var(--okbg);color:var(--ok)}
+.lv.warn{background:var(--warnbg);color:var(--warn)}
+.lv.bad{background:var(--badbg);color:var(--bad)}
+ul.rec{list-style:none;padding:0;margin:8px 0 0;display:grid;font-size:13.5px}
+ul.rec li{display:grid;grid-template-columns:8px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);line-height:1.55}
+ul.rec li:last-child{border-bottom:0}
+ul.rec li::before{content:"";width:8px;height:8px;border-radius:50%;margin-top:7px;background:var(--line2)}
+ul.rec li.ok::before{background:var(--ok)}ul.rec li.warn::before{background:var(--pin)}ul.rec li.bad::before{background:var(--bad)}
+.params{margin-top:14px;border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+.params summary{font-size:13.5px}
+.fld{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 2px}
+.fld label{font-size:12px;color:var(--mut);margin-bottom:3px;font-weight:400}
+.fld input[type=number]{font:500 14px var(--font-num);min-height:38px;padding:6px 9px}
 
-  .hero-content { max-width: 820px; }
-  .hero-eyebrow {
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent);
-    font-weight: 500;
-    margin-bottom: 28px;
-    display: flex; align-items: center; gap: 14px;
-    opacity: 0; transform: translateY(20px);
-    animation: fadeUp 0.8s var(--transition) 0.2s forwards;
-  }
-  .hero-eyebrow::before {
-    content: '';
-    display: inline-block;
-    width: 40px; height: 1px;
-    background: var(--accent);
-  }
-  .hero-title {
-    font-size: clamp(3.2rem, 7vw, 6rem);
-    font-weight: 300;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--navy);
-    margin-bottom: 32px;
-    opacity: 0; transform: translateY(30px);
-    animation: fadeUp 0.9s var(--transition) 0.4s forwards;
-  }
-  .hero-title em { font-style: italic; color: var(--accent); }
-  .hero-sub {
-    font-size: 1.1rem;
-    font-weight: 300;
-    color: var(--navy-muted);
-    line-height: 1.8;
-    max-width: 550px;
-    margin-bottom: 52px;
-    opacity: 0; transform: translateY(20px);
-    animation: fadeUp 0.8s var(--transition) 0.6s forwards;
-  }
-  .hero-cta {
-    display: flex; align-items: center; gap: 32px;
-    opacity: 0; transform: translateY(20px);
-    animation: fadeUp 0.8s var(--transition) 0.8s forwards;
-  }
-  .btn-primary {
-    display: inline-block;
-    padding: 16px 40px;
-    background: var(--navy);
-    color: var(--cream);
-    text-decoration: none;
-    font-size: 0.9rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: 500;
-    position: relative;
-    overflow: hidden;
-    transition: color 0.4s;
-  }
-  .btn-primary::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: var(--accent);
-    transform: translateX(-101%);
-    transition: transform 0.4s var(--transition);
-  }
-  .btn-primary:hover::before { transform: translateX(0); }
-  .btn-primary span { position: relative; z-index: 1; }
-  .btn-text {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-size: 0.9rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--navy-muted);
-    text-decoration: none;
-    transition: color 0.3s;
-  }
-  .btn-text:hover { color: var(--navy); }
-  .btn-text::after {
-    content: '→';
-    display: inline-block;
-    transition: transform 0.3s var(--transition);
-  }
-  .btn-text:hover::after { transform: translateX(5px); }
+/* ---------- PM + knowledge ---------- */
+.bar{height:6px;border-radius:99px;background:var(--sunk);border:1px solid var(--line);overflow:hidden;margin:6px 0 10px}
+.bar i{display:block;height:100%;width:0;background:var(--brand);transition:width .4s}
+.chk{display:flex;gap:12px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--line);font-size:14px;cursor:pointer;margin:0;font-weight:400;min-height:44px}
+.chk:hover{background:var(--sunk)}
+.chk input{margin-top:5px;width:16px;height:16px;flex:none;accent-color:var(--brand)}
+.chk em{font-style:normal;font-size:11.5px;color:var(--mut);margin-left:8px;border:1px solid var(--line2);border-radius:4px;padding:0 7px;white-space:nowrap}
+details.kn{border-top:1px solid var(--line);padding:12px 0}
+details.kn:last-child{border-bottom:1px solid var(--line)}
+details.kn summary{list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:14.5px}
+details.kn summary::-webkit-details-marker{display:none}
+details.kn summary::after{content:"+";font:400 20px/1 var(--font-num);color:var(--brand-ink);flex:none}
+details.kn[open] summary::after{content:"\2212"}
+details.kn p,details.kn li{font-size:13.5px;color:var(--mut);line-height:1.6}
+details.kn ul{margin:8px 0 0;padding-left:18px;display:grid;gap:4px}
+details.kn b{color:var(--ink)}
 
-  .hero-scroll-hint {
-    position: absolute;
-    bottom: 40px; left: 60px;
-    display: flex; align-items: center; gap: 14px;
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--navy-muted);
-    opacity: 0;
-    animation: fadeUp 0.8s var(--transition) 1.2s forwards;
-  }
-  .scroll-line {
-    width: 1px; height: 50px;
-    background: linear-gradient(to bottom, transparent, var(--navy-muted));
-    animation: scrollPulse 2s ease-in-out infinite;
-  }
-  @keyframes scrollPulse {
-    0%, 100% { opacity: 0.3; transform: scaleY(1); }
-    50% { opacity: 0.8; transform: scaleY(1.1); }
-  }
+.site-footer{padding-top:22px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:13px;line-height:1.6}
+.site-footer p{margin:4px 0}
+.site-footer a{color:var(--ink);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+.site-footer a:hover{color:var(--brand-ink)}
+.site-footer .disclaimer{font-size:12px;margin:14px auto 0;max-width:700px}
 
-  /* Section base */
-  section { padding: 120px 60px; }
-  .section-label {
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent);
-    font-weight: 500;
-    margin-bottom: 16px;
-    display: flex; align-items: center; gap: 14px;
-  }
-  .section-label::before {
-    content: '';
-    display: inline-block;
-    width: 30px; height: 1px;
-    background: var(--accent);
-  }
-  .section-title {
-    font-size: clamp(2.2rem, 4vw, 3.4rem);
-    font-weight: 300;
-    line-height: 1.15;
-    color: var(--navy);
-    max-width: 600px;
-  }
-  .section-title em { font-style: italic; color: var(--accent); }
+/* ---------- cursor: small red filled ring (light lag) + gold stroke ring (heavy lag) ---------- */
+.cur{position:fixed;left:0;top:0;pointer-events:none;z-index:10000;opacity:0;transition:opacity .2s;will-change:transform}
+.cur i{display:block;border-radius:50%;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.cur-dot i{width:12px;height:12px;margin:-6px 0 0 -6px;background:var(--brand);border:2px solid var(--brand-deep);box-shadow:0 0 0 1.5px rgba(255,255,255,.8)}
+.cur-gold i{width:42px;height:42px;margin:-21px 0 0 -21px;border:1.5px solid var(--gold)}
+html.cx-on .cur{opacity:1}
+html.cx-hov .cur-gold i{transform:scale(1.4)}
+html.cx-hov .cur-dot i{transform:scale(.7)}
+html.cx-down .cur-gold i{transform:scale(.8)}
+html.cx,html.cx *{cursor:none!important}
+html.cx input,html.cx textarea,html.cx select{cursor:auto!important}
+.tip{position:fixed;left:0;top:0;pointer-events:none;z-index:9999;padding:5px 10px;font:500 12px var(--font-num);background:var(--ink);color:var(--bg);border-radius:6px;opacity:0;transition:opacity .15s;white-space:nowrap}
+.tip.on{opacity:.95}
 
-  #services { background: var(--navy); position: relative; overflow: hidden; }
-  #services .section-label { color: var(--accent); }
-  #services .section-label::before { background: var(--accent); }
-  #services .section-title { color: var(--cream); }
-  #services .section-title em { color: var(--accent); }
-  .services-intro {
-    color: rgba(253,251,247,0.7);
-    font-size: 1rem;
-    font-weight: 300;
-    line-height: 1.8;
-    max-width: 450px;
-    margin-top: 20px;
-  }
-  .services-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    margin-bottom: 80px;
-    align-items: end;
-  }
-  .services-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: rgba(253,251,247,0.1);
-  }
-  .service-card {
-    background: var(--navy);
-    padding: 48px 40px;
-    position: relative;
-    overflow: hidden;
-    transition: background 0.4s var(--transition);
-    cursor: none;
-  }
-  .service-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--navy-light);
-    transform: translateY(101%);
-    transition: transform 0.5s var(--transition);
-  }
-  .service-card:hover::before { transform: translateY(0); }
-  .service-card > * { position: relative; z-index: 1; }
-  .service-num {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 2.4rem;
-    font-weight: 300;
-    color: rgba(253,251,247,0.12);
-    margin-bottom: 24px;
-    display: block;
-    transition: color 0.4s;
-  }
-  .service-card:hover .service-num { color: var(--accent); }
-  .service-name {
-    font-size: 1.5rem;
-    font-weight: 400;
-    color: var(--cream);
-    margin-bottom: 16px;
-  }
-  .service-desc {
-    font-size: 0.95rem;
-    font-weight: 300;
-    color: rgba(253,251,247,0.6);
-    line-height: 1.75;
-  }
-  .service-arrow {
-    display: block;
-    margin-top: 32px;
-    color: var(--accent);
-    font-size: 1.2rem;
-    transform: translateX(-8px);
-    opacity: 0;
-    transition: transform 0.4s var(--transition), opacity 0.4s;
-  }
-
-.service-image {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    transition: transform 0.6s var(--transition), opacity 0.6s;
+@media (prefers-reduced-motion:no-preference){
+  .led{animation:blink 1.8s ease-in-out infinite}.chip.trip .led{animation-duration:1s}
+  @keyframes blink{50%{opacity:.35}}
+  .pulse{animation:pulse 1.8s ease-out infinite;transform-origin:center;transform-box:fill-box}
+  @keyframes pulse{0%{transform:scale(.7);opacity:.5}100%{transform:scale(1.6);opacity:0}}
+  .ring{animation:ring 2.6s ease-out infinite;transform-origin:center;transform-box:fill-box}.ring.r2{animation-delay:1.3s}
+  @keyframes ring{0%{transform:scale(.6);opacity:.75}100%{transform:scale(3.4);opacity:0}}
+  .pin.drop{animation:drop .5s cubic-bezier(.2,1.5,.4,1);transform-origin:center;transform-box:fill-box}
+  @keyframes drop{0%{transform:scale(.1);opacity:0}100%{transform:scale(1);opacity:1}}
+  .band.grow{animation:fade .6s ease-out}
+  @keyframes fade{0%{opacity:0}100%{opacity:.5}}
+  .mapbox.tripfx{animation:tripglow .9s ease-out}
+  @keyframes tripglow{0%{box-shadow:0 0 0 0 rgba(179,18,28,.45)}100%{box-shadow:0 0 0 18px rgba(179,18,28,0)}}
 }
 
-.service-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; 
+/* ---------- responsive ---------- */
+@media (min-width:900px){.grid{grid-template-columns:minmax(0,340px) minmax(0,1fr)}}
+@media (min-width:1000px){.grid2,.pmgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* tablet + notebook below 1200: sidebar becomes a sticky top bar */
+@media (max-width:1199px){
+  html{scroll-padding-top:76px}
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{height:auto;z-index:40;flex-direction:row;align-items:center;gap:14px;overflow:visible;border-right:0;border-bottom:1px solid var(--line);
+    padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+  .brand{flex:none}
+  .brand small,.nav p,.sidefoot{display:none}
+  .nav{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a{flex:none;border-radius:0;padding:8px 12px}
+  .nav a.on{background:transparent;box-shadow:inset 0 -2px 0 var(--brand)}
+  .main{padding-block:22px 36px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
 }
-
-
-.service-card:hover .service-image {
-    transform: scale(1.1);
-    opacity: 0.3;
+@media (max-width:640px){
+  .brand b{font-size:15px}
+  .bm{width:32px;height:32px}
+  .main{padding-block:18px 30px;gap:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .grid,.stack,.grid2{gap:16px}
+  .panel{padding:16px}
+  .mapbox{padding:8px}
+  .top{align-items:flex-start}
+  .status{width:100%}
+  .chip{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .clock{padding-left:0}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .st:nth-child(odd){border-left:0;padding-left:0}
+  .two{grid-template-columns:1fr}
+  .fld{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fld input[type=number]{font-size:16px}
+  .feat .ft b{font-size:34px}
+  .result{padding:16px}
+  .result .btns>*{flex:1 1 100%}
+  .routelinks>*,.actions>*{flex:1 1 100%}
+  .gauges{gap:8px}
+  .gv b{font-size:19px}
+  details.kn summary{font-size:14px}
 }
-  .service-card:hover .service-arrow { transform: translateX(0); opacity: 1; }
-
-  #portfolio { padding-bottom: 80px; }
-  .portfolio-header {
-    display: flex; align-items: flex-end; justify-content: space-between;
-    margin-bottom: 60px;
-    flex-wrap: wrap; gap: 30px;
-  }
-  .portfolio-tabs {
-    display: flex; gap: 0;
-    border-bottom: 1px solid rgba(17,34,64,0.12);
-    margin-bottom: 60px;
-    overflow-x: auto;
-  }
-  .ptab {
-    padding: 14px 28px;
-    font-size: 0.9rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: 400;
-    color: var(--navy-muted);
-    background: none;
-    border: none;
-    cursor: none;
-    position: relative;
-    white-space: nowrap;
-    transition: color 0.3s;
-  }
-  .ptab::after {
-    content: '';
-    position: absolute;
-    bottom: -1px; left: 0; right: 0;
-    height: 2px;
-    background: var(--navy);
-    transform: scaleX(0);
-    transition: transform 0.4s var(--transition);
-  }
-  .ptab.active { color: var(--navy); font-weight: 500; }
-  .ptab.active::after { transform: scaleX(1); }
-  .ptab:hover { color: var(--navy); }
-
-  .portfolio-panel { display: none; animation: panelFadeIn 0.5s var(--transition) forwards; }
-  .portfolio-panel.active { display: block; }
-  @keyframes panelFadeIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .portfolio-grid {
-    display: grid;
-    gap: 20px;
-    align-items: start; 
-  }
-  
-  .portfolio-grid.layout-1 { grid-template-columns: repeat(3, 1fr); }
-  
-  .portfolio-grid.layout-2 { grid-template-columns: repeat(3, 1fr); } 
-  
-  .portfolio-grid.layout-half { grid-template-columns: 1fr 1fr; }
-
-  .portfolio-item {
-    position: relative; 
-    overflow: hidden;
-    background: var(--cream-dark);
-    cursor: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  }
-
-
-  .portfolio-thumb {
-    width: 100%; 
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #ffffff;
-  }
-
-
-  #panel-char .layout-1 .portfolio-thumb {
-      aspect-ratio: 3 / 4; 
-  }
-  
-
-  #panel-char .layout-half .portfolio-thumb,
-  #panel-bg .portfolio-thumb {
-      aspect-ratio: 16 / 9; 
-  }
-
-
-  #panel-prop .portfolio-thumb {
-      aspect-ratio: 4 / 3; 
-      padding: 20px;
-  }
-
-
-  #panel-chibi .portfolio-thumb {
-      aspect-ratio: 1 / 1;
-  }
-
-
-  #panel-typo .portfolio-thumb {
-      aspect-ratio: 16 / 9;
-  }
-
-  .portfolio-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s var(--transition); 
-  }
-  
-
-  #panel-prop .portfolio-thumb img {
-      object-fit: contain; 
-  }
-
-
-  .portfolio-item:hover .portfolio-thumb img {
-      transform: scale(1.05);
-  }
-
-  .portfolio-overlay {
-    position: absolute; inset: 0;
-    background: rgba(17, 34, 64, 0.85); 
-    display: flex; flex-direction: column;
-    align-items: flex-start; justify-content: flex-end;
-    padding: 32px;
-    opacity: 0;
-    transition: opacity 0.4s var(--transition);
-  }
-  .portfolio-item:hover .portfolio-overlay { opacity: 1; }
-  .portfolio-overlay h3 {
-    font-size: 1.4rem;
-    font-weight: 400;
-    color: var(--cream);
-    margin-bottom: 8px;
-    transform: translateY(10px);
-    transition: transform 0.4s var(--transition) 0.05s;
-  }
-  .portfolio-item:hover .portfolio-overlay h3 { transform: translateY(0); }
-  .portfolio-overlay p {
-    font-size: 0.9rem;
-    color: rgba(253,251,247,0.8);
-    letter-spacing: 0.05em;
-    transform: translateY(10px);
-    transition: transform 0.4s var(--transition) 0.1s;
-  }
-  .portfolio-item:hover .portfolio-overlay p { transform: translateY(0); }
-
- 
-  #contact {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 100px;
-    align-items: start;
-  }
-  .contact-info { margin-top: 48px; }
-  .contact-info-item {
-    display: flex; gap: 20px;
-    padding: 24px 0;
-    border-bottom: 1px solid rgba(17,34,64,0.1);
-  }
-  .contact-info-item:first-child { border-top: 1px solid rgba(17,34,64,0.1); }
-  .contact-info-label {
-    font-size: 0.85rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--navy-muted);
-    min-width: 100px;
-    padding-top: 2px;
-  }
-  .contact-info-value {
-    font-size: 1.15rem;
-    color: var(--navy);
-  }
-  .contact-form { display: flex; flex-direction: column; gap: 24px; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .form-group { display: flex; flex-direction: column; gap: 8px; }
-  .form-group label {
-    font-size: 0.85rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--navy-muted);
-  }
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    background: none;
-    border: none;
-    border-bottom: 1px solid rgba(17,34,64,0.2);
-    padding: 12px 0;
-    font-family: 'DM Sans', 'Prompt', sans-serif;
-    font-size: 1rem;
-    color: var(--navy);
-    outline: none;
-    transition: border-color 0.3s;
-    resize: none;
-    cursor: none;
-  }
-  .form-group input:focus,
-  .form-group textarea:focus,
-  .form-group select:focus { border-color: var(--navy); }
-  .form-group textarea { min-height: 100px; }
-  .form-group select { appearance: none; -webkit-appearance: none; }
-
-  #pricing {
-    background: var(--cream-dark);
-    text-align: center;
-  }
-
-  .pricing-header { margin-bottom: 56px; }
-  .pricing-header .section-label { justify-content: center; }
-  .pricing-header .section-label::before { display: none; }
-  .pricing-toggle {
-    display: inline-flex;
-    background: rgba(17,34,64,0.06);
-    border-radius: 0;
-    padding: 4px;
-    margin: 40px auto 60px;
-    gap: 0;
-  }
-  .ptoggle {
-    padding: 12px 36px;
-    font-size: 0.9rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: 400;
-    color: var(--navy-muted);
-    background: none;
-    border: none;
-    cursor: none;
-    transition: all 0.35s var(--transition);
-    position: relative;
-  }
-  .ptoggle.active {
-    background: var(--navy);
-    color: var(--cream);
-  }
-  .pricing-panels { position: relative; }
-  .pricing-panel { display: none; animation: panelFadeIn 0.5s var(--transition) forwards; }
-  .pricing-panel.active { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-  .price-card {
-    background: var(--cream);
-    padding: 48px 36px;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.4s var(--transition), box-shadow 0.4s;
-    cursor: none;
-    border-radius: 15px;
-  }
-  .price-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 30px 60px rgba(17,34,64,0.1);
-  }
-  .price-card.featured {
-    background: var(--navy);
-  }
-  .price-card.featured * { color: var(--cream) !important; }
-  .price-card.featured .price-tag { color: var(--accent) !important; }
-  .price-tier {
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--navy-muted);
-    margin-bottom: 12px;
-  }
-  .price-name {
-    font-size: 1.8rem;
-    font-weight: 400;
-    color: var(--navy);
-    margin-bottom: 28px;
-  }
-  .price-tag {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 3.2rem;
-    font-weight: 300;
-    color: var(--navy);
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .price-tag sup {
-    font-size: 1.2rem;
-    vertical-align: super;
-    font-weight: 400;
-  }
-  .price-period {
-    font-size: 0.9rem;
-    color: var(--navy-muted);
-    margin-bottom: 32px;
-  }
-  .price-divider {
-    width: 100%; height: 1px;
-    background: rgba(17,34,64,0.1);
-    margin-bottom: 28px;
-  }
-  .price-features { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px; }
-  .price-features li {
-    display: flex; align-items: flex-start; gap: 12px;
-    font-size: 0.95rem;
-    color: var(--navy);
-    font-weight: 300;
-  }
-  .price-features li::before {
-    content: '—';
-    color: var(--accent);
-    font-size: 0.7rem;
-    flex-shrink: 0;
-    margin-top: 3px;
-  }
-  .btn-card {
-    display: block; width: 100%;
-    padding: 14px;
-    text-align: center;
-    font-size: 0.9rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: 500;
-    cursor: none;
-    transition: all 0.35s var(--transition);
-    border: 1.5px solid var(--navy);
-    color: var(--navy);
-    background: none;
-    position: relative;
-    overflow: hidden;
-  }
-  .btn-card::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: var(--navy);
-    transform: translateY(101%);
-    transition: transform 0.4s var(--transition);
-  }
-  .btn-card:hover { color: var(--cream); }
-  .btn-card:hover::before { transform: translateY(0); }
-  .btn-card span { position: relative; z-index: 1; }
-  .price-card.featured .btn-card {
-    border-color: var(--accent);
-    color: var(--cream);
-  }
-  .price-card.featured .btn-card::before { background: var(--accent); }
-
-  footer {
-    background: var(--navy);
-    padding: 60px 60px 40px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 40px;
-    align-items: start;
-  }
-  .footer-brand .nav-logo { color: var(--cream); font-size: 1.4rem; }
-  .footer-brand p {
-    font-size: 0.9rem;
-    color: rgba(253,251,247,0.5);
-    margin-top: 12px;
-    font-weight: 300;
-    max-width: 350px;
-    line-height: 1.7;
-  }
-  .footer-copy {
-    font-size: 0.8rem;
-    color: rgba(253,251,247,0.3);
-    letter-spacing: 0.05em;
-    grid-column: 1 / -1;
-    border-top: 1px solid rgba(253,251,247,0.08);
-    padding-top: 24px;
-    margin-top: 20px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .footer-links { display: flex; gap: 40px; list-style: none; }
-  .footer-links a {
-    text-decoration: none;
-    color: rgba(253,251,247,0.45);
-    font-size: 0.85rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    transition: color 0.3s;
-  }
-  .footer-links a:hover { color: var(--accent); }
-
-  .reveal {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.7s var(--transition), transform 0.7s var(--transition);
-  }
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .reveal-delay-1 { transition-delay: 0.1s; }
-  .reveal-delay-2 { transition-delay: 0.2s; }
-  .reveal-delay-3 { transition-delay: 0.3s; }
-  .reveal-delay-4 { transition-delay: 0.4s; }
-  .reveal-delay-5 { transition-delay: 0.5s; }
-
-  @keyframes fadeUp {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-
-  @media (max-width: 900px) {
-    nav, section, footer { padding-left: 28px; padding-right: 28px; }
-    nav.scrolled { padding-left: 28px; padding-right: 28px; }
-    .hero-scroll-hint { left: 28px; }
-    #home { padding: 100px 28px 80px; }
-    .services-header { grid-template-columns: 1fr; }
-    .services-grid { grid-template-columns: 1fr; }
-    #contact { grid-template-columns: 1fr; gap: 60px; }
-    .form-row { grid-template-columns: 1fr; }
-    
-    .portfolio-grid.layout-1,
-    .portfolio-grid.layout-2,
-    .portfolio-grid.layout-half { 
-        grid-template-columns: 1fr; 
-    }
-    
-    .pricing-panel.active { grid-template-columns: 1fr; }
-
-
-    #pricing-individual.active, #pricing-package.active {
-      display: grid !important;
-      grid-template-columns: 1fr !important;
-      justify-content: center !important;
-    }
-
-    footer { grid-template-columns: 1fr; }
-    .footer-links { flex-wrap: wrap; gap: 20px; }
-    .nav-links { gap: 24px; }
-    body { cursor: auto; }
-    .cursor, .cursor-ring { display: none; }
-  }
-
-
-  #pricing-individual.active, #pricing-package.active {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(320px, 480px)) !important;
-    justify-content: center !important;
-    gap: 50px !important;
-    margin: 0 auto;
-  }
-
-
-  .zoom-btn {
-    position: absolute;
-    top: 30px; right: 30px;
-    width: 44px; height: 44px;
-    background: rgba(253, 251, 247, 0.1);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(253, 251, 247, 0.2);
-    color: var(--cream);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0;
-    transform: scale(0.8);
-    transition: all 0.4s var(--transition);
-    z-index: 10;
-  }
-  .service-card:hover .zoom-btn {
-    opacity: 1;
-    transform: scale(1);
-  }
-  .zoom-btn:hover {
-    background: var(--accent);
-    color: var(--navy);
-    border-color: var(--accent);
-    transform: scale(1.1) !important;
-  }
-
- 
-  .lightbox-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(17, 34, 64, 0.95);
-    backdrop-filter: blur(8px);
-    z-index: 9000;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.4s var(--transition);
-  }
-  .lightbox-overlay.active {
-    opacity: 1; pointer-events: auto;
-  }
-  .lightbox-img {
-    max-width: 85vw; max-height: 85vh;
-    object-fit: contain;
-    border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    transform: scale(0.95) translateY(20px);
-    transition: transform 0.5s var(--transition);
-  }
-  .lightbox-overlay.active .lightbox-img {
-    transform: scale(1) translateY(0);
-  }
-  .lightbox-close {
-    position: absolute;
-    top: 40px; right: 50px;
-    font-size: 3rem;
-    line-height: 1;
-    color: rgba(253,251,247,0.6);
-    transition: color 0.3s;
-  }
-  .lightbox-close:hover { color: var(--accent); }
+@media (max-width:380px){.fld{grid-template-columns:minmax(0,1fr)}.gauges{grid-template-columns:minmax(0,1fr)}}
 </style>
-</head>
-<body>
 
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
+<div class="app">
+<aside class="side">
+  <div class="brand"><span class="bm" data-ic="bolt"></span><div><b>OCS Locator</b><small>รถไฟฟ้าสายสีแดง</small></div></div>
+  <nav class="nav" id="nav" aria-label="เมนูหลัก">
+    <p>ภาพรวม</p>
+    <a href="#top" data-sec="top" class="on" data-ic="grid">แดชบอร์ด</a>
+    <a href="#locate" data-sec="locate" data-ic="pin">ตำแหน่งฟอลต์</a>
+    <p>วิเคราะห์</p>
+    <a href="#elec" data-sec="elec" data-ic="bolt">ไฟฟ้าและลัดวงจร</a>
+    <a href="#mech" data-sec="mech" data-ic="sliders">OCS เชิงกล</a>
+    <a href="#pm" data-sec="pm" data-ic="shield">PM และมาตรฐาน</a>
+    <p>ข้อมูล</p>
+    <a href="#stations" data-sec="stations" data-ic="table">สถานีและหลัก km</a>
+    <a href="#log" data-sec="log" data-ic="list">บันทึกเหตุการณ์</a>
+  </nav>
+  <div class="sidefoot">ข้อมูลสถานี: กรมการขนส่งทางราง</div>
+</aside>
 
-<nav id="navbar">
-  <a href="#home" class="nav-logo">RACGINE STUDIO<span></span></a>
-  <ul class="nav-links">
-    <li><a href="#home">หน้าแรก</a></li>
-    <li><a href="#services">บริการของเรา</a></li>
-    <li><a href="#portfolio">ผลงาน</a></li>
-    <li><a href="#pricing">ราคาและแพ็กเกจ</a></li>
-    <li><a href="#contact">ติดต่อเรา</a></li>
-  </ul>
-</nav>
-
-<section id="home">
-  <div class="hero-bg-line v1"></div>
-  <div class="hero-bg-line v2"></div>
-  <div class="hero-bg-line h1"></div>
-  <div class="hero-circle c1"></div>
-  <div class="hero-circle c2"></div>
-  <div class="hero-content">
-    <div class="hero-eyebrow">สตูดิโอออกแบบ · ก่อตั้งปี 2026</div>
-    <h1 class="hero-title">เราสร้างสรรค์เรื่องราวผ่าน<br><em>งานศิลปะ</em></h1>
-    <p class="hero-sub">สตูดิโอออกแบบที่เชี่ยวชาญด้านการออกแบบคาแรคเตอร์, คอนเซปต์อาร์ต, และงานภาพเพื่อสร้างแบรนด์ เราพร้อมเนรมิตโลกแห่งจินตนาการของคุณให้เป็นจริงด้วยความตั้งใจและประณีต</p>
-    <div class="hero-cta">
-      <a href="#portfolio" class="btn-primary"><span>ดูผลงานของเรา</span></a>
-      <a href="#contact" class="btn-text">เริ่มโปรเจกต์ใหม่</a>
-    </div>
-  </div>
-  <div class="hero-scroll-hint">
-    <div class="scroll-line"></div>
-    เลื่อนลงเพื่อดูเพิ่มเติม
-  </div>
-</section>
-
-<section id="services">
-  <div class="services-header">
+<main class="main" id="top">
+  <header class="top">
     <div>
-      <div class="section-label reveal">สิ่งที่เราทำ</div>
-      <h2 class="section-title reveal reveal-delay-1">สร้างสรรค์ด้วย<br><em>ความประณีตและใส่ใจ</em></h2>
+      <p class="eyebrow">แบบจำลองระบบสายส่งเหนือหัว (OCS) · รถไฟฟ้าสายสีแดง</p>
+      <h1>OCS Fault Locator</h1>
+      <p class="lead">กรอกหลัก km จากเครื่อง Fault Locator เพื่อระบุตำแหน่งฟอลต์ คำนวณกระแสลัดวงจร และประเมินสภาพสาย OCS</p>
     </div>
-    <p class="services-intro reveal reveal-delay-2">ทุกโปรเจกต์เริ่มต้นจากการรับฟังอย่างเข้าใจ เราไม่เพียงแค่ออกแบบ แต่เราถ่ายทอดวิสัยทัศน์ของคุณให้ออกมาเป็นภาพที่สื่อความหมายได้ชัดเจน</p>
-  </div>
-  
-  <div class="services-grid">
-    <a href="#portfolio" class="service-card reveal service-link" data-target="char" style="text-decoration: none; display: block; position: relative;">
-      <div class="service-image"><img src="assets/images/character/char2.png" alt=""></div>
-      
-      <div class="zoom-btn" data-img="assets/images/character/char2.png">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-      </div>
+    <div class="status">
+      <div class="chip" id="chip" role="status"><span class="led"></span><span id="chipText">พร้อมใช้งาน</span></div>
+      <div class="clock" id="clock"></div>
+    </div>
+  </header>
 
-      <span class="service-num">01</span>
-      <h3 class="service-name">Character Design</h3>
-      <p class="service-desc">ตั้งแต่คอนเซปต์เริ่มต้นไปจนถึงผลงานที่สมบูรณ์ สร้างคาแรคเตอร์ที่มีเอกลักษณ์และสะท้อนบุคลิกได้อย่างชัดเจน</p>
-      <span class="service-arrow">→</span>
-    </a>
+  <section class="panel kpi">
+    <h2><span class="ib" data-ic="clock"></span>เหตุการณ์ล่าสุด</h2>
+    <div class="stats">
+      <div class="st"><span>สาย</span><b id="k_line">–</b></div>
+      <div class="st"><span>หลัก km</span><b id="k_km">–</b></div>
+      <div class="st"><span>ช่วงสถานี</span><b id="k_seg">–</b></div>
+      <div class="st"><span>กระแสลัดวงจร</span><b id="k_i">–</b></div>
+      <div class="st"><span>เวลาตัดวงจร</span><b id="k_t">–</b></div>
+      <div class="st"><span>ความรุนแรงไฟฟ้า</span><b id="k_e" class="v">–</b></div>
+      <div class="st"><span>ความเสี่ยงเชิงกล</span><b id="k_r" class="v">–</b></div>
+    </div>
+  </section>
 
-    <a href="#portfolio" class="service-card reveal reveal-delay-1 service-link" data-target="chibi" style="text-decoration: none; display: block; position: relative;">
-      <div class="service-image"><img src="assets/images/chibi/ch7.jpg" alt=""></div>
-      
-      <div class="zoom-btn" data-img="assets/images/chibi/ch7.jpg">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-      </div>
-
-      <span class="service-num">02</span>
-      <h3 class="service-name">Chibi Art</h3>
-      <p class="service-desc">ภาพวาดตัวละครสไตล์ชิบิสุดน่ารัก เหมาะสำหรับนำไปทำสินค้า, สติกเกอร์, หรืองานดิจิทัลต่างๆ</p>
-      <span class="service-arrow">→</span>
-    </a>
-
-    <a href="#portfolio" class="service-card reveal reveal-delay-2 service-link" data-target="bg" style="text-decoration: none; display: block; position: relative;">
-      <div class="service-image"><img src="assets/images/backgd/bg3.png" alt=""></div>
-      
-      <div class="zoom-btn" data-img="assets/images/backgd/bg3.png">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-      </div>
-
-      <span class="service-num">03</span>
-      <h3 class="service-name">Background Design</h3>
-      <p class="service-desc">สร้างสภาพแวดล้อมที่ช่วยเพิ่มมิติให้เรื่องราว ไม่ว่าจะเป็นห้องที่อบอุ่นหรือทิวทัศน์ที่กว้างใหญ่</p>
-      <span class="service-arrow">→</span>
-    </a>
-
-    <a href="#portfolio" class="service-card reveal reveal-delay-3 service-link" data-target="prop" style="text-decoration: none; display: block; position: relative;">
-      <div class="service-image"><img src="assets/images/prop/prop8.png" alt=""></div>
-      
-      <div class="zoom-btn" data-img="assets/images/prop/prop8.png">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-      </div>
-
-      <span class="service-num">04</span>
-      <h3 class="service-name">Prop Design</h3>
-      <p class="service-desc">ออกแบบสิ่งของและอาวุธต่างๆ อย่างพิถีพิถัน เพื่อเติมเต็มรายละเอียดให้โลกของคุณสมบูรณ์ยิ่งขึ้น</p>
-      <span class="service-arrow">→</span>
-    </a>
-
-    <a href="#portfolio" class="service-card reveal reveal-delay-4 service-link" data-target="typo" style="text-decoration: none; display: block; position: relative;">
-      <div class="service-image"><img src="assets/images/typo/typo3.png" alt=""></div>
-      
-      <div class="zoom-btn" data-img="assets/images/typo/typo3.png">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-      </div>
-
-      <span class="service-num">05</span>
-      <h3 class="service-name">Typography</h3>
-      <p class="service-desc">ออกแบบตัวอักษรและจัดวางองค์ประกอบให้แบรนด์ของคุณมีเอกลักษณ์ที่น่าจดจำ</p>
-      <span class="service-arrow">→</span>
-    </a>
-  </div>
-</section>
-
-<section id="portfolio">
-  <div class="portfolio-header">
-    <div>
-      <div class="section-label reveal">ผลงานที่โดดเด่น</div>
-      <h2 class="section-title reveal reveal-delay-1"><em>ผลงาน</em> ของเรา</h2>
+  <div class="grid" id="locate">
+    <div class="stack">
+      <section class="panel">
+        <h2><span class="ib" data-ic="grid"></span>เลือกสาย</h2>
+        <div class="seg" id="seg"></div>
+        <div class="routelinks" id="routeLinks"></div>
+        <p class="hint">เส้นทางแบบขับรถวิ่งตามถนน ไม่ใช่ตามรางรถไฟ ใช้ดูลำดับสถานีเท่านั้น</p>
+        <textarea id="manualCopy" class="manual" rows="4" readonly hidden aria-label="ข้อความสำหรับคัดลอก"></textarea>
+      </section>
+      <section class="panel">
+        <h2><span class="ib" data-ic="pin"></span>กรอกหลัก km ที่เกิดฟอลต์</h2>
+        <label for="kmInput">km จากสถานีต้นทาง <span class="tag">(ช่วง <span id="kmRange"></span>)</span></label>
+        <div class="kmrow"><input id="kmInput" type="number" step="0.01" inputmode="decimal"><button class="go" id="goBtn" type="button">ระบุตำแหน่ง</button></div>
+        <input id="kmSlider" type="range" step="0.01" aria-label="เลื่อนเพื่อเปลี่ยนหลัก km">
+        <div class="two">
+          <div><label for="tol">คลาดเคลื่อน ± (เมตร)</label><input id="tol" type="number" min="0" step="50" value="100" inputmode="numeric"></div>
+          <div><label for="cause">สาเหตุที่สงสัย</label><select id="cause"></select></div>
+        </div>
+        <div style="margin-top:14px"><label for="note">หมายเหตุ</label><input id="note" type="text" placeholder="เช่น ฝนตก ขบวน 1234 สั่งตัดไฟ"></div>
+        <div class="actions"><button class="btn alt" id="saveBtn" type="button">บันทึกเหตุการณ์</button><span class="hint" id="saveMsg" role="status" style="margin:0;align-self:center"></span></div>
+        <p class="hint">ค่าที่ใส่ไว้ตอนเปิดหน้าเป็นตัวอย่าง ให้แทนด้วยค่าจริงจากเครื่อง Fault Locator แถบสีเหลืองบนแผนผังแสดงช่วงที่ฟอลต์อาจอยู่</p>
+      </section>
+      <section class="panel">
+        <details>
+          <summary>ค่า km นี้มาจากไหน</summary>
+          <p>โดยทั่วไป ค่า km มาจากอุปกรณ์ระบุตำแหน่งฟอลต์ (Fault Locator) ที่ฝังอยู่ในรีเลย์ป้องกัน (Protection Relay) ของสถานีจ่ายไฟขับเคลื่อน โดยระบบจะคำนวณระยะทางถึงจุดลัดวงจรจากค่ากระแสและแรงดันไฟฟ้าขณะเกิดฟอลต์ จากนั้นระบบ SCADA จะดึงค่ากิโลเมตรนี้มาแสดงผลที่ศูนย์ควบคุม</p>
+          <p>หน้านี้ไม่ได้ตรวจจับหรือจำลองการเกิดฟอลต์เอง ทำหน้าที่แปลงตัวเลข km ที่คุณกรอก ให้เป็นตำแหน่งบนแผนผังและพิกัด โดยใช้หลักการสอดแทรกเส้นตรง (Linear Interpolation) ระหว่างสถานี ความแม่นยำของพิกัดจึงขึ้นอยู่กับความแม่นยำของค่า km จากรีเลย์, ความถูกต้องของตารางระยะ km ของแต่ละสถานีในระบบ และความคดเคี้ยวของเส้นทางจริง</p>
+        </details>
+      </section>
+    </div>
+    <div class="stack">
+      <section class="panel mapbox" id="mapbox">
+        <div id="ov"></div>
+        <svg id="map" viewBox="0 0 640 640" role="img" aria-label="แผนผังสายสีแดงตามพิกัดสถานี"></svg>
+        <p class="cap">วาดจากพิกัดสถานี (ทิศเหนืออยู่ด้านบน) แตะหรือคลิกบนเส้นทางเพื่อเลือกตำแหน่งฟอลต์</p>
+      </section>
+      <div id="result" class="result" hidden></div>
     </div>
   </div>
 
-  <div class="portfolio-tabs">
-    <button class="ptab active" data-panel="char">Character Design</button>
-    <button class="ptab" data-panel="chibi">Chibi Art</button>
-    <button class="ptab" data-panel="bg">Background Design</button>
-    <button class="ptab" data-panel="prop">Prop Design</button>
-    <button class="ptab" data-panel="typo">Typography</button>
+  <div class="grid2">
+    <section class="panel" id="elec">
+      <h2><span class="ib" data-ic="bolt"></span>ฟอลต์ไฟฟ้า OCS 25 kV 50 Hz</h2>
+      <div class="feat"><div class="ft"><span>กระแสลัดวงจร</span><b id="ek_i">–</b><small>kA · ระยะจากจุดจ่ายไฟ <span id="ek_d">–</span> km</small></div>
+        <svg id="e_chart" class="ch" viewBox="0 0 560 170" role="img" aria-label="กราฟกระแสลัดวงจรตามระยะ"></svg></div>
+      <div class="tiles">
+        <div class="tile"><span>แรงดันที่บัสจ่ายไฟ</span><b id="ek_vb">–</b><small id="ek_vbs">kV</small></div>
+        <div class="tile"><span>แรงดันที่จุดฟอลต์</span><b id="ek_vf">–</b><small>kV</small></div>
+        <div class="tile"><span>เวลาตัดวงจร</span><b id="ek_t">–</b><small id="ek_ts">s</small></div>
+        <div class="tile"><span>พลังงาน I²t</span><b id="ek_e">–</b><small>MA²s</small></div>
+        <div class="tile"><span>ทนความร้อนลวด</span><b id="ek_m">–</b><small>เท่า (ควร &gt; 1)</small></div>
+      </div>
+      <svg id="e_vbar" class="vb" viewBox="0 0 560 62" role="img" aria-label="แรงดันบัสเทียบเกณฑ์ EN 50163"></svg>
+      <div id="e_lv" class="lv">รอข้อมูล</div>
+      <ul class="rec" id="e_rec"></ul>
+      <details class="params"><summary>ตั้งค่าพารามิเตอร์ไฟฟ้า</summary>
+        <div class="fld">
+          <div><label for="e_v">แรงดันระบบ (kV)</label><input id="e_v" type="number" value="25" step="0.5"></div>
+          <div><label for="e_c">ตัวคูณแรงดัน c</label><input id="e_c" type="number" value="1" step="0.05"></div>
+          <div><label for="e_s">กำลังลัดวงจรต้นทาง (MVA)</label><input id="e_s" type="number" value="300" step="10"></div>
+          <div><label for="e_off">จุดจ่ายไฟถึงต้นสาย (km)</label><input id="e_off" type="number" value="0" step="0.1"></div>
+          <div><label for="e_r">R สาย (Ω/km)</label><input id="e_r" type="number" value="0.20" step="0.01"></div>
+          <div><label for="e_x">X สาย (Ω/km)</label><input id="e_x" type="number" value="0.45" step="0.01"></div>
+          <div><label for="e_rf">R จุดฟอลต์/อาร์ก (Ω)</label><input id="e_rf" type="number" value="1" step="0.1"></div>
+          <div><label for="e_ip">รีเลย์ pickup (A)</label><input id="e_ip" type="number" value="600" step="50"></div>
+          <div><label for="e_tms">TMS</label><input id="e_tms" type="number" value="0.1" step="0.05"></div>
+          <div><label for="e_inst">Instantaneous (A)</label><input id="e_inst" type="number" value="4000" step="100"></div>
+        </div>
+        <p class="hint">ค่าเริ่มต้นเป็นค่าตัวอย่าง ข้อมูลจริงของระบบจ่ายไฟต้องใช้ค่าจากผู้ออกแบบระบบหรือการไฟฟ้า</p>
+      </details>
+    </section>
+
+    <section class="panel" id="mech">
+      <h2><span class="ib" data-ic="sliders"></span>OCS เชิงกล: ความตึง ระยะหย่อน แพนโทกราฟ</h2>
+      <div class="gauges">
+        <div class="gauge"><svg class="gsv ok" viewBox="0 0 120 72"><path class="gb" d="M12 62A48 48 0 0 1 108 62" pathLength="100"/><path id="g_lat" class="gf" d="M12 62A48 48 0 0 1 108 62" pathLength="100" stroke-dasharray="0 100"/></svg>
+          <div class="gv"><b id="mk_lat">–</b><small>m</small></div><span>เบี่ยงรวม เทียบช่วงหัวสไลด์ <i id="g_latp">–</i></span></div>
+        <div class="gauge"><svg class="gsv ok" viewBox="0 0 120 72"><path class="gb" d="M12 62A48 48 0 0 1 108 62" pathLength="100"/><path id="g_sf" class="gf" d="M12 62A48 48 0 0 1 108 62" pathLength="100" stroke-dasharray="0 100"/></svg>
+          <div class="gv"><b id="mk_sf">–</b><small>safety factor</small></div><span>ความตึง เทียบแรงดึงขาด <i id="g_sfp">–</i></span></div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><span>ระยะหย่อน</span><b id="mk_f">–</b><small>m กลางสแปน</small></div>
+        <div class="tile"><span>หย่อนเพิ่ม</span><b id="mk_d">–</b><small>mm จากออกแบบ</small></div>
+        <div class="tile"><span>ความสูงกลางสแปน</span><b id="mk_h">–</b><small id="mk_hs">m</small></div>
+        <div class="tile"><span>ลวดคงเหลือ</span><b id="mk_ar">–</b><small>mm²</small></div>
+      </div>
+      <svg id="m_chart" class="ch" viewBox="0 0 560 170" role="img" aria-label="โปรไฟล์ความหย่อนของสายระหว่างเสา"></svg>
+      <div id="m_lv" class="lv">รอข้อมูล</div>
+      <ul class="rec" id="m_rec"></ul>
+      <details class="params"><summary>ตั้งค่าพารามิเตอร์ OCS</summary>
+        <div class="fld">
+          <div><label for="m_l">ความยาวสแปน (m)</label><input id="m_l" type="number" value="50" step="1"></div>
+          <div><label for="m_t0">ความตึงออกแบบ (kN)</label><input id="m_t0" type="number" value="15" step="0.5"></div>
+          <div><label for="m_t">ความตึงที่วัดได้ (kN)</label><input id="m_t" type="number" value="13" step="0.5"></div>
+          <div><label for="m_m">มวลสายรวม (kg/m)</label><input id="m_m" type="number" value="2.2" step="0.1"></div>
+          <div><label for="m_h">ความสูงออกแบบ (m)</label><input id="m_h" type="number" value="5.3" step="0.05"></div>
+          <div><label for="m_hmin">ความสูงต่ำสุด (m)</label><input id="m_hmin" type="number" value="5" step="0.05"></div>
+          <div><label for="m_a">ลวดใหม่ (mm²)</label><input id="m_a" type="number" value="120" step="5"></div>
+          <div><label for="m_wear">สึกหรอ (%)</label><input id="m_wear" type="number" value="10" step="1" min="0" max="60"></div>
+          <div><label for="m_w">ลม (km/h)</label><input id="m_w" type="number" value="60" step="5"></div>
+          <div><label for="m_st">Stagger (m)</label><input id="m_st" type="number" value="0.2" step="0.05"></div>
+          <div><label for="m_lim">หัวสไลด์ใช้งาน ± (m)</label><input id="m_lim" type="number" value="0.4" step="0.05"></div>
+        </div>
+        <p class="hint">ลวดสัมผัสตามมาตรฐาน EN 50149 มีหน้าตัด 80, 100, 107, 120, 150 mm² ส่วนเกณฑ์สึกหรอ ความตึง และความสูงขั้นต่ำให้ใช้ตามคู่มือของ รฟท.</p>
+      </details>
+    </section>
   </div>
 
-  <div class="portfolio-panel active" id="panel-char">
-    <div class="portfolio-grid layout-1">
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/character/char3.png" alt="Character Design 1">
-        </div>
-        <div class="portfolio-overlay"><p>Character Design · 2024</p></div>
+  <section class="panel" id="pm">
+    <h2><span class="ib" data-ic="shield"></span>แผนบำรุงรักษา (PM) และมาตรฐานอ้างอิง</h2>
+    <div class="pmgrid">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--mut)"><span>ความคืบหน้ารอบนี้</span><b id="pmPct" style="color:var(--ink)">0%</b></div>
+        <div class="bar"><i id="pmBar"></i></div>
+        <div id="pmList"></div>
+        <button class="reset" id="pmReset" type="button">เริ่มรอบ PM ใหม่</button>
+        <p class="hint">ความถี่เป็นตัวอย่าง ปรับตามแผนบำรุงรักษาจริง บันทึกในเบราว์เซอร์นี้</p>
       </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/character/char2.png" alt="Character Design 2">
-        </div>
-        <div class="portfolio-overlay"><p>Character Design · 2024</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/character/char1.png" alt="Character Design 3">
-        </div>
-        <div class="portfolio-overlay"><p>Character Design · 2023</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/character/char5.png" alt="Character Design 3">
-        </div>
-        <div class="portfolio-overlay"><p>Character Design · 2023</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/character/char7.png" alt="Character Design 3">
-        </div>
-        <div class="portfolio-overlay"><p>Character Design · 2023</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/character/char9.png" alt="Character Design 3">
-        </div>
-        <div class="portfolio-overlay"><p>Character Design · 2024</p></div>
+      <div>
+        <details class="kn" open><summary>สายหย่อนเกินไป อันตรายอย่างไร</summary>
+          <ul><li>ลวดต่ำกว่าแนวที่แพนโทกราฟรับได้ เกิดแรงกระแทกและอาร์กถี่ หัวสไลด์สึกผิดปกติ</li><li>แพนโทกราฟอาจเกี่ยวลวดหรือแขนยึด ดึงสายขาดหรือฉีกลงมา และสร้างความเสียหายต่อเสาและหลังคารถ</li><li>สายขาดที่ยังมีไฟตกลงพื้น เสี่ยงไฟดูด ไฟลุก และขบวนรถหยุดทั้งช่วงจ่ายไฟ</li></ul></details>
+        <details class="kn"><summary>สายตึงเกินไป หรืออากาศเย็นจัด</summary>
+          <ul><li>ลวดรับแรงใกล้พิกัดขาด โดยเฉพาะจุดที่สึกหรอหรือเคยถูกอาร์ก</li><li>ภาระบนเสา แขนยึด และฐานรากเพิ่ม เสี่ยงเสาเอียงหรือแขนหัก</li><li>ตรวจน้ำหนักถ่วงและสลิงปรับความตึงอัตโนมัติว่าเคลื่อนที่อิสระ ไม่ติดขัด</li></ul></details>
+        <details class="kn"><summary>สาเหตุฟอลต์ที่พบบ่อย</summary>
+          <ul><li>วัตถุพาดสาย ต้นไม้ สัตว์ ว่าว หรือบอลลูน</li><li>ฉนวนสกปรกหรือแตก เกิดการวาบไฟตามผิวฉนวนช่วงฝนและหมอก</li><li>แพนโทกราฟชำรุดหรือคาร์บอนสึก อุปกรณ์ยึดหลุด และฟ้าผ่า</li></ul></details>
+        <details class="kn"><summary>ขั้นตอนความปลอดภัยเมื่อสายขาด</summary>
+          <ul><li>ถือว่าสายมีไฟ 25 kV จนกว่าศูนย์ควบคุมยืนยันตัดไฟ และต่อลงดินตามขั้นตอนแล้ว</li><li>กั้นพื้นที่ ห้ามเข้าใกล้สายที่ตกพื้น ระวังแรงดันช่วงก้าว (step voltage)</li><li>ตรวจแพนโทกราฟขบวนที่ผ่านจุดนั้นก่อนปล่อยรถต่อ และตรวจสายสองช่วงข้างเคียง</li></ul></details>
+        <details class="kn"><summary>มาตรฐานและสูตรที่ใช้คำนวณ</summary>
+          <ul><li><b>EN 50163</b> แรงดันระบบ 25 kV AC 50 Hz: Umin2 17.5 kV, Umin1 19 kV, Umax1 27.5 kV, Umax2 29 kV (แถบเทียบในกราฟแรงดัน)</li><li><b>EN 50149</b> ลวดสัมผัสทองแดงและโลหะผสม หน้าตัด 80, 100, 107, 120, 150 mm²</li><li><b>EN 50367</b> เกณฑ์ปฏิสัมพันธ์แพนโทกราฟกับ OCS (ความสูงลวด การเบี่ยงด้านข้าง การยกตัวของลวด) และ <b>EN 50317</b> วิธีวัดแรงสัมผัส</li><li><b>IEC 60909</b> แนวคิดแหล่งจ่ายสมมูล: Zs = Un²/Ssc, I = c·Un/|Zs + Zสาย + Rf|, แรงดันบัส = U − I·Zs</li><li>ทฤษฎีความร้อนแบบ adiabatic: I ≤ k·A/√t (k ของทองแดงประมาณ 143 A·√s/mm²) ใช้ตรวจว่าลวดทนกระแสฟอลต์ได้หรือไม่</li><li>ความหย่อนสายแบบพาราโบลา f = wL²/8T, แรงลม q = ½ρv²·Cd·d, การเบี่ยงด้านข้าง y = qL²/8T</li><li>ค่ากำลังลัดวงจร ความต้านทานสาย ความตึง ค่าตั้งรีเลย์ และเกณฑ์สึกหรอของ รฟท. เป็นข้อมูลภายใน จึงใช้ค่าตัวอย่างและต้องแทนที่ด้วยค่าจริง</li></ul></details>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="portfolio-panel" id="panel-chibi">
-    <div class="portfolio-grid layout-2">
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch1.png" alt="chibi Design 01">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch2.png" alt="chibi Design 02">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch3.png" alt="chibi Design 03">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch4.png" alt="chibi Design 04">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch5.png" alt="chibi Design 05">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch6.png" alt="chibi Design 06">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch7.jpg" alt="chibi Design 07">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch8.png" alt="chibi Design 08">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch9.png" alt="chibi Design 09">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch10.png" alt="chibi Design 10">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch11.png" alt="chibi Design 11">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/chibi/ch12.png" alt="chibi Design 12">
-        </div>
-        <div class="portfolio-overlay"><p>Chibi Art · 2026</p></div>
-      </div>
-    </div>
-  </div>
+  <section class="panel" id="stations">
+    <h2><span class="ib" data-ic="table"></span>สถานีและหลัก km</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>รหัส</th><th>สถานี</th><th>km</th><th>ที่มา km</th><th>พิกัด</th><th></th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table></div>
+    <p class="hint">ค่า km เริ่มต้นคำนวณจากพิกัดแบบเส้นตรง ไม่ใช่หลัก km ตามรางจริง แก้เป็นหลัก km จริงของ รฟท. ได้ในช่อง km ค่าที่แก้จะจำไว้ในเบราว์เซอร์นี้</p>
+    <button class="reset" id="resetBtn" type="button">คืนค่า km เริ่มต้น</button>
+  </section>
 
-  <div class="portfolio-panel" id="panel-bg">
-    <div class="portfolio-grid layout-half">
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/backgd/bg1.png" alt="Background Design 01"> 
-        </div>
-        <div class="portfolio-overlay"><p>Background Design · 2024</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/backgd/bg2.png" alt="Background Design 02">
-        </div>
-        <div class="portfolio-overlay"><p>Background Design · 2023</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/backgd/bg3.png" alt="Background Design 03">
-        </div>
-        <div class="portfolio-overlay"><p>Background Design · 2023</p></div>
-      </div>
-    </div>
-  </div>
+  <section class="panel" id="log">
+    <h2><span class="ib" data-ic="list"></span>บันทึกเหตุการณ์</h2>
+    <div class="tablewrap"><table id="logTable" hidden>
+      <thead><tr><th>เวลา</th><th>สาย</th><th>km</th><th>ระหว่างสถานี</th><th>สาเหตุ</th><th>หมายเหตุ</th><th></th></tr></thead>
+      <tbody id="logBody"></tbody>
+    </table></div>
+    <p class="empty" id="logEmpty">ยังไม่มีบันทึก กรอก km เลือกสาเหตุ แล้วกด "บันทึกเหตุการณ์"</p>
+    <div class="actions"><button class="btn alt" id="logCopy" type="button">คัดลอกตาราง (วางลง Excel)</button><button class="btn alt" id="logClear" type="button">ล้างบันทึก</button></div>
+    <p class="hint">บันทึกเก็บในเบราว์เซอร์นี้เท่านั้น ไม่ส่งไปที่ใด</p>
+  </section>
 
-  <div class="portfolio-panel" id="panel-prop">
-    <div class="portfolio-grid layout-2">
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-           <img src="assets/images/prop/prop1.png" alt="Prop 1">
-        </div>
-        <div class="portfolio-overlay"><p>Prop Design · 2024</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-           <img src="assets/images/prop/prop2.png" alt="Prop 2">
-        </div>
-        <div class="portfolio-overlay"><p>Prop Design · 2024</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-           <img src="assets/images/prop/prop3.png" alt="Prop 3">
-        </div>
-        <div class="portfolio-overlay"><p>Prop Design · 2023</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-           <img src="assets/images/prop/prop4.png" alt="Prop 4">
-        </div>
-        <div class="portfolio-overlay"><p>Prop Design · 2023</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-           <img src="assets/images/prop/prop5.png" alt="Prop 5">
-        </div>
-        <div class="portfolio-overlay"><p>Prop Design · 2023</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-           <img src="assets/images/prop/prop6.png" alt="Prop 6">
-        </div>
-        <div class="portfolio-overlay"><p>Prop Design · 2023</p></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="portfolio-panel" id="panel-typo">
-    <div class="portfolio-grid layout-half">
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/typo/typo5.png" alt="Typo 1">
-        </div>
-        <div class="portfolio-overlay"><p>Typography · 2024</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/typo/typo2.png" alt="Typo 2">
-        </div>
-        <div class="portfolio-overlay"><p>Typography · 2023</p></div>
-      </div>
-      <div class="portfolio-item">
-        <div class="portfolio-thumb">
-          <img src="assets/images/typo/typo3.png" alt="Typo 3">
-        </div>
-        <div class="portfolio-overlay"><p>Typography · 2024</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="pricing">
-  <div class="pricing-header">
-    <h2 class="section-title reveal" style="margin:0 auto;text-align:center">Services</h2>
-  </div>
-  
-  <div class="pricing-toggle reveal reveal-delay-1">
-    <button class="ptoggle active" data-pricing="individual">Individual</button>
-    <button class="ptoggle" data-pricing="package">Package</button>
-  </div>
-
-<div class="pricing-panels">
-    
-    <div class="pricing-panel active" id="pricing-individual">
-      
-      <div class="price-category reveal reveal-delay-2" style="background: var(--cream); padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-        <h3 class="price-name" style="text-align: center; font-size: 1.5rem; margin-bottom: 10px;">Character Design</h3>
-        <p style="text-align: center; font-size: 0.9rem; color: var(--navy-muted); margin-bottom: 30px; line-height: 1.6;">
-          การออกแบบตัวละครที่มีเอกลักษณ์ และสะท้อนบุคลิกอย่างชัดเจน เหมาะสำหรับเกม การ์ตูน แอนิเมชัน และโปรเจกต์สร้างสรรค์ต่างๆ
-        </p>
-        
-        <div style="display: flex; justify-content: space-between; font-weight: 600; border-bottom: 2px solid var(--navy); padding-bottom: 10px; margin-bottom: 15px;">
-          <span>สเกล</span>
-          <span>ราคา</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(17,34,64,0.1); padding: 12px 0; font-size: 0.95rem;">
-          <span>หัว-อก</span>
-          <span>650</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(17,34,64,0.1); padding: 12px 0; font-size: 0.95rem;">
-          <span>หัว-เอว</span>
-          <span>800</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(17,34,64,0.1); padding: 12px 0; font-size: 0.95rem;">
-          <span>ครึ่งตัว</span>
-          <span>950</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(17,34,64,0.1); padding: 12px 0; font-size: 0.95rem;">
-          <span>หัว-เข่า</span>
-          <span>1100</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 0.95rem;">
-          <span>เต็มตัว</span>
-          <span>1250</span>
-        </div>
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 40px;">
-        <div class="price-category reveal reveal-delay-3" style="background: var(--cream); padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-          <h3 class="price-name" style="text-align: center; font-size: 1.5rem; margin-bottom: 10px;">Chibi Art</h3>
-          <p style="text-align: center; font-size: 0.9rem; color: var(--navy-muted); margin-bottom: 30px; line-height: 1.6;">
-            ภาพวาดตัวละครสไตล์ชิบิสุดน่ารัก เหมาะสำหรับใช้เป็นมาสคอตสินค้า (merchandise) และภาพโปรไฟล์ส่วนตัว
-          </p>
-          <div style="display: flex; justify-content: space-between; font-weight: 600; border-bottom: 2px solid var(--navy); padding-bottom: 10px; margin-bottom: 15px;">
-            <span>สเกล</span>
-            <span>ราคา</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(17,34,64,0.1); padding: 12px 0; font-size: 0.95rem;">
-            <span>หัว</span>
-            <span>50</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 0.95rem;">
-            <span>เต็มตัว</span>
-            <span>100</span>
-          </div>
-        </div>
-
-        <div class="price-category reveal reveal-delay-4" style="background: var(--cream); padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-          <h3 class="price-name" style="text-align: center; font-size: 1.5rem; margin-bottom: 10px;">Background Design</h3>
-          <p style="text-align: center; font-size: 0.9rem; color: var(--navy-muted); margin-bottom: 30px; line-height: 1.6;">
-            การออกแบบฉากและสภาพแวดล้อมที่ช่วยเสริมบรรยากาศและเรื่องราว ให้มีมิติและความน่าสนใจ
-          </p>
-          <div style="display: flex; justify-content: space-between; font-weight: 600; border-bottom: 2px solid var(--navy); padding-bottom: 10px; margin-bottom: 15px;">
-            <span>สเกล</span>
-            <span>ราคา</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(17,34,64,0.1); padding: 12px 0; font-size: 0.95rem;">
-            <span>Grayscale</span>
-            <span>50</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 0.95rem;">
-            <span>Full Color</span>
-            <span>100</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="pricing-panel" id="pricing-package">
-      
-      <div class="price-card reveal" style="background: var(--cream); border: 2px solid rgba(17,34,64,0.05); border-radius: 15px; padding: 40px; text-align: center; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-        <h3 class="price-name" style="font-weight: 600; font-size: 1.6rem; color: var(--navy); margin-bottom: 24px;">Novel Cover Package</h3>
-        
-        <div style="display: flex; justify-content: center; align-items: baseline; gap: 12px; margin-bottom: 30px;">
-          <span style="font-family: 'DM Sans', sans-serif; font-size: 2.5rem; font-weight: 600; color: var(--navy);">฿800</span>
-          <span style="text-decoration: line-through; color: var(--navy-muted); font-size: 1.2rem;">฿870</span>
-        </div>
-        
-        <div style="display: flex; flex-direction: column; align-items: center; padding-top: 20px; flex-grow: 1;">
-          <div style="text-align: left;">
-            <p style="font-weight: 600; color: var(--navy); margin-bottom: 20px; font-size: 0.95rem;">Package Includes:</p>
-            <ul style="list-style: none; display: flex; flex-direction: column; gap: 16px; padding: 0;">
-              <li style="display: flex; gap: 12px; align-items: center; color: var(--navy); font-size: 0.95rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Character Design (หัว-อก)
-              </li>
-              <li style="display: flex; gap: 12px; align-items: center; color: var(--navy); font-size: 0.95rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Chibi Art
-              </li>
-              <li style="display: flex; gap: 12px; align-items: center; color: var(--navy); font-size: 0.95rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Typography
-              </li>
-            </ul>
-          </div>
-        </div>
-        
-        <div style="margin-top: 35px; padding-top: 20px; border-top: 1px solid rgba(17,34,64,0.1);">
-          <p style="font-size: 0.85rem; color: var(--navy-muted);">เชิงพาณิชย์ราคา x 2</p>
-        </div>
-      </div>
-
-      <div class="price-card reveal reveal-delay-1" style="background: var(--cream); border: 2px solid rgba(17,34,64,0.05); border-radius: 15px; padding: 40px; text-align: center; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-        <h3 class="price-name" style="font-weight: 600; font-size: 1.6rem; color: var(--navy); margin-bottom: 24px;">Game Character Package</h3>
-        
-        <div style="display: flex; justify-content: center; align-items: baseline; gap: 12px; margin-bottom: 30px;">
-          <span style="font-family: 'DM Sans', sans-serif; font-size: 2.5rem; font-weight: 600; color: var(--navy);">฿1700</span>
-          <span style="text-decoration: line-through; color: var(--navy-muted); font-size: 1.2rem;">฿1770</span>
-        </div>
-        
-        <div style="display: flex; flex-direction: column; align-items: center; padding-top: 20px; flex-grow: 1;">
-          <div style="text-align: left;">
-            <p style="font-weight: 600; color: var(--navy); margin-bottom: 20px; font-size: 0.95rem;">Package Includes:</p>
-            <ul style="list-style: none; display: flex; flex-direction: column; gap: 16px; padding: 0;">
-              <li style="display: flex; gap: 12px; align-items: center; color: var(--navy); font-size: 0.95rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Character Design (เต็มตัว)
-              </li>
-              <li style="display: flex; gap: 12px; align-items: center; color: var(--navy); font-size: 0.95rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                2 Prop Designs
-              </li>
-              <li style="display: flex; gap: 12px; align-items: center; color: var(--navy); font-size: 0.95rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Typography
-              </li>
-            </ul>
-          </div>
-        </div>
-        
-        <div style="margin-top: 35px; padding-top: 20px; border-top: 1px solid rgba(17,34,64,0.1);">
-          <p style="font-size: 0.85rem; color: var(--navy-muted);">เชิงพาณิชย์ราคา x 2</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="contact">
-  <div class="contact-left">
-    <div class="section-label reveal">Get In Touch</div>
-    <h2 class="section-title reveal reveal-delay-1" style="color: var(--navy); font-weight: 500; line-height: 1.2;">
-      มาร่วมสร้างสรรค์<br><em style="color: var(--accent); font-style: italic;">ผลงานระดับพรีเมียม</em><br>ไปกับเรา
-    </h2>
-    
-    <div class="contact-info">
-      <div class="contact-info-item reveal reveal-delay-2">
-        <span class="contact-info-label">Email</span>
-        <span class="contact-info-value" style="color: var(--navy); font-weight: 600; font-family: 'DM Sans', sans-serif;">66011213358@msu.ac.th</span>
-      </div>
-      <div class="contact-info-item reveal reveal-delay-3">
-        <span class="contact-info-label">Location</span>
-        <span class="contact-info-value" style="color: var(--navy);">Maha Sarakham, Thailand</span>
-      </div>
-      <div class="contact-info-item reveal reveal-delay-4">
-        <span class="contact-info-label">Response</span>
-        <span class="contact-info-value" style="color: var(--navy);">Fast Response (Within 24h)</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="contact-right">
-    <form action="https://api.web3forms.com/submit" method="POST" class="contact-form reveal">
-      
-      <input type="hidden" name="access_key" value="b197f86f-b169-40a2-8441-64ee06500ea7">
-      
-      <input type="hidden" name="subject" value="มีลูกค้าติดต่อจากหน้าเว็บ RACGINE STUDIO">
-      <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
-
-      <div class="form-row">
-        <div class="form-group">
-          <label style="color: var(--navy); font-weight: 500;">ชื่อ-นามสกุล</label>
-          <input type="text" name="name" placeholder="ระบุชื่อของคุณ" required style="border-bottom: 2px solid rgba(17,34,64,0.1);">
-        </div>
-      </div>
-      
-      <div class="form-group">
-        <label style="color: var(--navy); font-weight: 500;">อีเมลติดต่อ</label>
-        <input type="email" name="email" placeholder="example@email.com" required style="border-bottom: 2px solid rgba(17,34,64,0.1);">
-      </div>
-      
-      <div class="form-group">
-        <label style="color: var(--navy); font-weight: 500;">บริการที่คุณสนใจ</label>
-        <select name="service" style="border-bottom: 2px solid rgba(17,34,64,0.1); color: var(--navy);">
-          <option value="Not Specified">กรุณาเลือกบริการ...</option>
-          <option value="Character Design">Character Design (ออกแบบตัวละคร)</option>
-          <option value="Chibi Art">Chibi Art (ชิบิ)</option>
-          <option value="Background Design">Background Design (ฉากหลัง)</option>
-          <option value="Prop Design">Prop Design (อาวุธ/สิ่งของ)</option>
-          <option value="Typography">Typography (ไทโปแกรฟี)</option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label style="color: var(--navy); font-weight: 500;">รายละเอียดโปรเจกต์</label>
-        <textarea name="message" placeholder="เล่าเรื่องราวหรือสิ่งที่ต้องการให้เราช่วยสร้างสรรค์..." required style="border-bottom: 2px solid rgba(17,34,64,0.1); min-height: 120px;"></textarea>
-      </div>
-
-      <button type="submit" class="btn-primary" style="border:none; width: 100%; padding: 22px; font-weight: 600; background: var(--navy); border-radius: 8px;">
-        <span style="letter-spacing: 2px;">SEND MESSAGE</span>
-      </button>
-    </form>
-  </div>
-</section>
-<footer>
-  <div class="footer-brand">
-    <a href="#home" class="nav-logo">RACGINE STUDIO<span></span></a>
-    <p>สตูดิโอออกแบบที่ผสานจินตนาการเข้ากับความประณีต เราพร้อมเนรมิตโลกของคุณให้มีชีวิตขึ้นมาผ่านภาพวาดทีละภาพ</p>
-  </div>
-  <ul class="footer-links">
-    <li><a href="#home">หน้าแรก</a></li>
-    <li><a href="#services">บริการของเรา</a></li>
-    <li><a href="#portfolio">ผลงาน</a></li>
-    <li><a href="#pricing">ราคาแพ็กเกจ</a></li>
-    <li><a href="#contact">ติดต่อเรา</a></li>
-  </ul>
-  <div class="footer-copy">
-    <span>© 2026 RACGINE STUDIO. สงวนลิขสิทธิ์</span>
-    <span>สร้างสรรค์ด้วยความตั้งใจ</span>
-  </div>
-</footer>
-
-<div id="image-lightbox" class="lightbox-overlay">
-  <div class="lightbox-close" id="lightbox-close">&times;</div>
-  <img id="lightbox-img" class="lightbox-img" src="" alt="Full View">
+  <footer class="site-footer">
+    <p><strong>Developed by</strong> Sqrse.Chp | <strong>Concept &amp; Idea by</strong> Sittikorn K.</p>
+    <p><strong>Data Source </strong> กรมการขนส่งทางราง</p>
+    <p>อ้างอิงระบบบัญชีข้อมูล: <a href="https://gdcatalog.go.th/dataset/gdpublish-rail-station1" target="_blank" rel="noopener">https://gdcatalog.go.th/dataset/gdpublish-rail-station1</a></p>
+    <p style="margin-top:16px">© 2026 Sittikorn K. &amp; Sqrse.Chp. All rights reserved.</p>
+    <p class="disclaimer">(ผลงานต้นแบบนี้สร้างขึ้นเพื่อวัตถุประสงค์ในการสาธิตเท่านั้น ห้ามคัดลอก ดัดแปลง หรือนำไปใช้ในเชิงพาณิชย์โดยไม่ได้รับอนุญาต)</p>
+  </footer>
+</main>
 </div>
 
 <script>
-  // Custom cursor & Ring
-  const cursor = document.getElementById('cursor');
-  const cursorRing = document.getElementById('cursorRing');
-  let mouseX = 0, mouseY = 0;
-  let ringX = 0, ringY = 0;
+var LINES = [
+  { id: "north", color: "rn", short: "สายสีแดงเข้ม", full: "Red north · สายธานีรัถยา", route: "กรุงเทพอภิวัฒน์ – รังสิต", example: 12.35,
+    stations: [
+      { code: "N01", en: "KTW (BSG) · Krung Thep Aphiwat", name: "กรุงเทพอภิวัฒน์ (บางซื่อ)", lat: 13.80464389, lng: 100.5420537 },
+      { code: "N02", en: "CTK · Chatuchak", name: "จตุจักร", lat: 13.82652595, lng: 100.5493932 },
+      { code: "N03", en: "WSN · Wat Samian Nari", name: "วัดเสมียนนารี", lat: 13.84168597, lng: 100.5575223 },
+      { code: "N04", en: "BKH · Bang Khen", name: "บางเขน", lat: 13.84696561, lng: 100.5607408 },
+      { code: "N05", en: "TSH · Thung Song Hong", name: "ทุ่งสองห้อง", lat: 13.86020462, lng: 100.5673919 },
+      { code: "N06", en: "LAK · Lak Si", name: "หลักสี่", lat: 13.88624187, lng: 100.5818476 },
+      { code: "N07", en: "KHA · Kan Kheha", name: "การเคหะ", lat: 13.89861755, lng: 100.5890021 },
+      { code: "N08", en: "DMG · Don Muang", name: "ดอนเมือง", lat: 13.91507215, lng: 100.5979559 },
+      { code: "N09", en: "LHK · Lak Hok", name: "หลักหก", lat: 13.96583148, lng: 100.6053144 },
+      { code: "N10", en: "RST · Rangsit", name: "รังสิต", lat: 13.99065039, lng: 100.602157 }
+    ] },
+  { id: "west", color: "rw", short: "สายสีแดงอ่อน", full: "Red west · สายนครวิถี", route: "บางซ่อน – ตลิ่งชัน", example: 5.0,
+    stations: [
+      { code: "W02", en: "BSN · Bang Son", name: "บางซ่อน", lat: 13.82205892, lng: 100.534189 },
+      { code: "W03", en: "BMR · Bang Bamru", name: "บางบำหรุ", lat: 13.79170674, lng: 100.4776743 },
+      { code: "W04", en: "TLC · Taling Chan", name: "ตลิ่งชัน", lat: 13.78934932, lng: 100.4400187 }
+    ] }
+];
 
-  // --- ระบบ Custom Cursor และเสกละอองใบไม้ร่วง ---
-  document.addEventListener('mousemove', e => {
-    mouseX = e.clientX; mouseY = e.clientY;
-    
-    // ขยับเคอร์เซอร์หลัก (ทรงหยดน้ำ) ให้ตามเมาส์ทันที
-    cursor.style.left = mouseX + 'px';
-    cursor.style.top = mouseY + 'px';
+var CAUSES = [
+  "ไม่ระบุ",
+  "ลัดวงจรลงดิน (Earth fault) / วัตถุพาดสาย",
+  "อุปกรณ์ OCS เสียหายทางกล (สายขาด หย่อน แขนยึดหลุด)",
+  "แพนโทกราฟชำรุด / เกิดอาร์ก",
+  "สภาพอากาศ (ลมพายุ ฟ้าผ่า ต้นไม้ล้ม)",
+  "สัตว์หรือสิ่งแปลกปลอม"
+];
 
-    // สร้างละอองแบบสุ่ม (โอกาส 30% ที่จะเกิดละอองต่อการขยับเมาส์ 1 ครั้ง)
-    if (Math.random() > 0.7) {
-      createParticle(mouseX, mouseY);
+function $(id) { return document.getElementById(id); }
+function haversineKm(a, b) {
+  var R = 6371.0088, r = Math.PI / 180;
+  var dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+  var h = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.pow(Math.sin(dLng / 2), 2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function fillKm(st) {
+  var cum = 0;
+  st.forEach(function (s, i) {
+    if (i > 0) cum += haversineKm(st[i - 1], s);
+    s.kmCalc = cum; s.km = cum; s.kmReal = false;
+  });
+}
+function locate(st, km) {
+  var first = st[0].km, last = st[st.length - 1].km;
+  if (typeof km !== "number" || isNaN(km)) return { error: "กรุณากรอกตัวเลข km" };
+  if (km < first || km > last) return { error: "ค่า km อยู่นอกช่วงของสายนี้ (" + first.toFixed(2) + " – " + last.toFixed(2) + " km)" };
+  var i = 0;
+  while (i < st.length - 2 && km > st[i + 1].km) i++;
+  var a = st[i], b = st[i + 1];
+  var t = (km - a.km) / ((b.km - a.km) || 1);
+  var dA = km - a.km, dB = b.km - km;
+  var exact = null;
+  st.forEach(function (s) { if (Math.abs(s.km - km) < 0.05) exact = s; });
+  return { a: a, b: b, dA: dA, dB: dB, nearest: dA <= dB ? a : b, exact: exact,
+           lat: a.lat + (b.lat - a.lat) * t, lng: a.lng + (b.lng - a.lng) * t };
+}
+function ptAt(st, km) {
+  var k = Math.max(st[0].km, Math.min(st[st.length - 1].km, km));
+  return locate(st, k);
+}
+function pathPoints(st, k1, k2) {
+  var pts = [ptAt(st, k1)];
+  st.forEach(function (s) { if (s.km > k1 && s.km < k2) pts.push(s); });
+  pts.push(ptAt(st, k2));
+  return pts;
+}
+function gmaps(lat, lng) {
+  return "https://www.google.com/maps/search/?api=1&query=" + lat.toFixed(6) + "," + lng.toFixed(6);
+}
+var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+var STORE = "ocs-km-v3", LOGKEY = "ocs-log-v1";
+var current = LINES[0];
+var lastKm = null;
+var animToken = 0;
+var stnEls = [];
+var proj = null;
+var mapW = 640;
+var logs = [];
+
+LINES.forEach(function (l) { fillKm(l.stations); });
+function loadOverrides() {
+  try {
+    var o = JSON.parse(localStorage.getItem(STORE) || "{}");
+    LINES.forEach(function (l) { l.stations.forEach(function (s) {
+      var v = o[l.id + ":" + s.code];
+      if (typeof v === "number") { s.km = v; s.kmReal = true; }
+    }); });
+  } catch (e) {}
+  try { logs = JSON.parse(localStorage.getItem(LOGKEY) || "[]"); if (!Array.isArray(logs)) logs = []; } catch (e) { logs = []; }
+}
+function saveOverride(l, s) {
+  try {
+    var o = JSON.parse(localStorage.getItem(STORE) || "{}");
+    o[l.id + ":" + s.code] = s.km;
+    localStorage.setItem(STORE, JSON.stringify(o));
+  } catch (e) {}
+}
+function saveLogs() { try { localStorage.setItem(LOGKEY, JSON.stringify(logs)); } catch (e) {} }
+loadOverrides();
+
+var NS = "http://www.w3.org/2000/svg";
+function el(name, attrs, text) {
+  var n = document.createElementNS(NS, name);
+  for (var k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+function P(p) { var q = proj(p.lat, p.lng); return q.x.toFixed(1) + "," + q.y.toFixed(1); }
+function isTall() { return $("map").getAttribute("data-tall") === "1"; }
+
+/* The map is drawn in real pixels so labels keep a readable size on phones, tablets and desktops. */
+function drawMap() {
+  var svg = $("map");
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  stnEls = [];
+  var st = current.stations;
+  var W = Math.max(280, Math.round(svg.getBoundingClientRect().width || 640));
+  mapW = W;
+  var narrow = W < 520;
+  var lats = st.map(function (s) { return s.lat; }), lngs = st.map(function (s) { return s.lng; });
+  var minLat = Math.min.apply(null, lats), maxLat = Math.max.apply(null, lats);
+  var minLng = Math.min.apply(null, lngs), maxLng = Math.max.apply(null, lngs);
+  var ks = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180);
+  var dx = (maxLng - minLng) * ks || 1e-6, dy = (maxLat - minLat) || 1e-6;
+  var tall = dy > dx;
+  var H, pad;
+  if (tall) {
+    H = narrow ? 600 : Math.round(Math.min(720, Math.max(480, window.innerHeight * 0.78)));
+    pad = narrow ? { l: 16, r: 178, t: 28, b: 28 } : { l: 48, r: 250, t: 36, b: 36 };
+  } else {
+    H = Math.round(Math.min(340, Math.max(230, W * 0.46)));
+    var px = Math.round(Math.max(54, W * 0.12));
+    pad = { l: px, r: px, t: 70, b: 70 };
+  }
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("data-tall", tall ? "1" : "0");
+  var aw = W - pad.l - pad.r, ah = H - pad.t - pad.b;
+  var scY = ah / dy, scX = Math.min(scY, aw / dx);
+  if (!tall) { scX = scY = Math.min(aw / dx, ah / dy); }
+  var ox = pad.l + (aw - dx * scX) / 2, oy = pad.t + (ah - dy * scY) / 2;
+  proj = function (lat, lng) { return { x: ox + (lng - minLng) * ks * scX, y: oy + (maxLat - lat) * scY }; };
+
+  var track = el("polyline", { points: st.map(P).join(" "), "class": "track" });
+  track.style.stroke = "var(--" + current.color + ")";
+  svg.appendChild(track);
+
+  st.forEach(function (s, i) {
+    var p = proj(s.lat, s.lng);
+    var c = el("circle", { cx: p.x, cy: p.y, r: 5.5, "class": "stn" });
+    svg.appendChild(c); stnEls.push(c);
+    var t;
+    if (tall) {
+      t = el("text", { x: p.x + 13, y: p.y + 4, "class": "lbl" });
+    } else {
+      var up = i % 2 === 1;
+      var anchor = i === 0 ? "middle" : "middle";
+      t = el("text", { x: p.x, y: p.y + (up ? -22 : 30), "class": "lbl", "text-anchor": anchor });
     }
+    t.appendChild(document.createTextNode(s.name + "  "));
+    t.appendChild(el("tspan", { "class": "k" }, s.km.toFixed(2)));
+    svg.appendChild(t);
   });
+  drawFault({ drop: false });
+}
 
-  function animateRing() {
-    ringX += (mouseX - ringX) * 0.12;
-    ringY += (mouseY - ringY) * 0.12;
-    cursorRing.style.left = ringX + 'px';
-    cursorRing.style.top = ringY + 'px';
-    requestAnimationFrame(animateRing);
+function clearFault() {
+  ["bandG", "faultG"].forEach(function (id) {
+    var o = $(id);
+    if (o) o.parentNode.removeChild(o);
+  });
+}
+
+function moveFault(r, tol) {
+  var g = $("faultG"), b = document.querySelector("#bandG polyline");
+  if (!g || (tol > 0) !== !!b) return false;
+  var p = proj(r.lat, r.lng), t = g.querySelector("text");
+  Array.prototype.forEach.call(g.querySelectorAll("circle"), function (c) { c.setAttribute("cx", p.x); c.setAttribute("cy", p.y); });
+  if (t) {
+    if (isTall()) { t.setAttribute("x", p.x - 16); t.setAttribute("y", p.y + 4); }
+    else { t.setAttribute("x", Math.max(54, Math.min(mapW - 54, p.x))); t.setAttribute("y", p.y - 18); }
+    t.textContent = "ฟอลต์ km " + lastKm.toFixed(2);
   }
-  animateRing();
+  if (b) { var tk = tol / 1000; b.setAttribute("points", pathPoints(current.stations, lastKm - tk, lastKm + tk).map(P).join(" ")); }
+  return true;
+}
+function drawFault(opts) {
+  if (opts && opts.live && lastKm != null && proj) {
+    var rr = locate(current.stations, lastKm);
+    if (!rr.error && moveFault(rr, parseFloat($("tol").value))) return;
+  }
+  clearFault();
+  if (lastKm == null || !proj) return;
+  var svg = $("map");
+  var st = current.stations;
+  var r = locate(st, lastKm);
+  if (r.error) return;
+  var tol = parseFloat($("tol").value);
+  if (tol > 0) {
+    var tk = tol / 1000;
+    var bg = el("g", { id: "bandG" });
+    var pts = pathPoints(st, lastKm - tk, lastKm + tk);
+    bg.appendChild(el("polyline", { points: pts.map(P).join(" "), "class": "band" + (opts && opts.drop ? " grow" : "") }));
+    svg.appendChild(bg);
+  }
+  var p = proj(r.lat, r.lng);
+  var g = el("g", { id: "faultG" });
+  g.appendChild(el("circle", { cx: p.x, cy: p.y, r: 9, "class": "ring" }));
+  g.appendChild(el("circle", { cx: p.x, cy: p.y, r: 9, "class": "ring r2" }));
+  g.appendChild(el("circle", { cx: p.x, cy: p.y, r: 14, "class": "pin-halo pulse" }));
+  g.appendChild(el("circle", { cx: p.x, cy: p.y, r: 8, "class": "pin" + (opts && opts.drop ? " drop" : "") }));
+  var tall = isTall();
+  if (!(tall && mapW < 520)) {
+    g.appendChild(el("text", tall ? { x: p.x - 16, y: p.y + 4, "class": "pin-lbl", "text-anchor": "end" }
+                                  : { x: Math.max(54, Math.min(mapW - 54, p.x)), y: p.y - 18, "class": "pin-lbl", "text-anchor": "middle" },
+                     "ฟอลต์ km " + lastKm.toFixed(2)));
+  }
+  svg.appendChild(g);
+}
 
-  // ฟังก์ชันเสกละออง (Particle)
-  function createParticle(x, y) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.style.left = x + 'px';
-    particle.style.top = y + 'px';
+function cancelAnim() {
+  animToken++;
+  ["trailG", "trainG"].forEach(function (id) {
+    var o = $(id);
+    if (o) o.parentNode.removeChild(o);
+  });
+  stnEls.forEach(function (c) { c.classList.remove("lit"); });
+}
 
-    // สุ่มทิศทางให้เหมือนใบไม้ปลิว
-    const dx = (Math.random() - 0.5) * 80 + 'px'; 
-    const dy = (Math.random() * 60 + 20) + 'px';  
-    const drot = (Math.random() * 360) + 'deg';   
+function animateTo(km) {
+  cancelAnim();
+  if (REDUCED) { drawFault({ drop: false }); return; }
+  clearFault();
+  var svg = $("map");
+  var st = current.stations;
+  var first = st[0].km;
+  var my = ++animToken;
+  var trailG = el("g", { id: "trailG" });
+  var trail = el("polyline", { points: "", "class": "trail" });
+  trailG.appendChild(trail);
+  var trainG = el("g", { id: "trainG" });
+  var train = el("circle", { r: 7, cx: -20, cy: -20, "class": "train" });
+  trainG.appendChild(train);
+  svg.appendChild(trailG); svg.appendChild(trainG);
+  var dur = Math.min(1900, 800 + (km - first) * 70);
+  var t0 = performance.now();
+  function frame(now) {
+    if (my !== animToken) return;
+    var p = Math.min(1, (now - t0) / dur);
+    var e = 1 - Math.pow(1 - p, 3);
+    var k = first + (km - first) * e;
+    var pts = pathPoints(st, first, k);
+    trail.setAttribute("points", pts.map(P).join(" "));
+    var q = proj(pts[pts.length - 1].lat, pts[pts.length - 1].lng);
+    train.setAttribute("cx", q.x); train.setAttribute("cy", q.y);
+    stnEls.forEach(function (c, i) { c.classList.toggle("lit", st[i].km <= k); });
+    if (p < 1) { requestAnimationFrame(frame); return; }
+    cancelAnim();
+    drawFault({ drop: true });
+    var mb = $("mapbox");
+    mb.classList.remove("tripfx"); void mb.offsetWidth; mb.classList.add("tripfx");
+  }
+  requestAnimationFrame(frame);
+}
 
-    // ส่งค่าทิศทางที่สุ่มได้ไปให้ CSS Animation ทำงาน
-    particle.style.setProperty('--dx', dx);
-    particle.style.setProperty('--dy', dy);
-    particle.style.setProperty('--drot', drot);
+function setChip(km) {
+  var chip = $("chip");
+  if (km == null) { chip.className = "chip"; $("chipText").textContent = "พร้อมใช้งาน"; return; }
+  chip.className = "chip trip";
+  $("chipText").textContent = "TRIP · km " + km.toFixed(2);
+}
 
-    document.body.appendChild(particle);
+function showResult(animate, live) {
+  var out = $("result");
+  var km = parseFloat($("kmInput").value);
+  var r = locate(current.stations, km);
+  out.hidden = false;
+  out.textContent = "";
+  if (r.error) {
+    out.className = "result err";
+    out.textContent = r.error;
+    lastKm = null; cancelAnim(); clearFault(); setChip(null); calcAll();
+    return;
+  }
+  lastKm = km;
+  var estimated = current.stations.some(function (s) { return !s.kmReal; });
+  out.className = "result ok";
+  var where = r.exact ? "ตรงสถานี <b>" + r.exact.name + "</b>"
+                      : "อยู่ระหว่างสถานี <b>" + r.a.name + "</b> และ <b>" + r.b.name + "</b>";
+  out.innerHTML =
+    '<div class="big">เกิดฟอลต์ที่ km <span class="num">' + km.toFixed(2) + '</span></div>' +
+    '<div>' + where + '</div>' +
+    '<div>ห่างจาก ' + r.a.name + ' <b class="num">' + r.dA.toFixed(2) + ' km</b> · ห่างจาก ' + r.b.name + ' <b class="num">' + r.dB.toFixed(2) + ' km</b></div>' +
+    '<div>สถานีที่ใกล้ที่สุด: <b>' + r.nearest.name + '</b></div>' +
+    '<div>พิกัดฟอลต์ <b class="num">' + r.lat.toFixed(6) + ', ' + r.lng.toFixed(6) + '</b></div>' +
+    '<div class="btns">' +
+      '<a class="btn" target="_blank" rel="noopener" href="' + gmaps(r.lat, r.lng) + '">เปิดตำแหน่งฟอลต์ใน Google Maps</a>' +
+      '<a class="btn" target="_blank" rel="noopener" href="' + faultRouteUrl(r) + '">เปิดเส้นทาง ' + r.a.name + ' → ' + r.b.name + ' (ผ่านจุดฟอลต์)</a>' +
+      '<a class="btn alt" target="_blank" rel="noopener" href="' + gmaps(r.nearest.lat, r.nearest.lng) + '">เปิดสถานี ' + r.nearest.name + '</a>' +
+      '<button type="button" class="btn alt" data-text="' + r.lat.toFixed(6) + ', ' + r.lng.toFixed(6) + '">คัดลอกพิกัดฟอลต์</button>' +
+    '</div>' +
+    '<div class="hint">' + (estimated ? "km ของสถานีบางส่วนคำนวณจากพิกัด (เส้นตรง) ไม่ใช่หลัก km จริง · " : "") +
+    'ตำแหน่งบนแผนที่เป็นค่าประมาณ สอดแทรกเส้นตรงระหว่างสถานี</div>';
+  bindCopy(out);
+  setChip(km);
+  if (animate) animateTo(km); else { cancelAnim(); drawFault({ drop: false, live: !!live }); }
+  calcAll();
+}
 
-    // ลบละอองทิ้งเมื่อแอนิเมชันจบ
-    setTimeout(() => {
-      particle.remove();
-    }, 1000);
+function renderTable() {
+  var tb = $("tbody");
+  tb.textContent = "";
+  current.stations.forEach(function (s, i) {
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td class="code">' + s.code + '</td>' +
+      '<td>' + s.name + '<span class="en">' + s.en + '</span></td>' +
+      '<td><input type="number" step="0.01" id="km-' + s.code + '" value="' + s.km.toFixed(2) + '" data-i="' + i + '" aria-label="km ของสถานี' + s.name + '"></td>' +
+      '<td class="tag">' + (s.kmReal ? "กรอกเอง" : "คำนวณจากพิกัด") + '</td>' +
+      '<td class="coord"><a target="_blank" rel="noopener" href="' + gmaps(s.lat, s.lng) + '">' + s.lat.toFixed(5) + ', ' + s.lng.toFixed(5) + '</a></td>' +
+      '<td><button type="button" class="copy" data-text="' + s.lat + ', ' + s.lng + '" aria-label="คัดลอกพิกัดสถานี' + s.name + '">คัดลอก</button></td>';
+    tb.appendChild(tr);
+  });
+  bindCopy(tb);
+  Array.prototype.forEach.call(tb.querySelectorAll("input"), function (inp) {
+    inp.addEventListener("change", function () {
+      var v = parseFloat(inp.value);
+      if (isNaN(v)) return;
+      var s = current.stations[+inp.getAttribute("data-i")];
+      s.km = v; s.kmReal = true; saveOverride(current, s);
+      refreshAll(true);
+    });
+  });
+}
+
+function updateRange() {
+  var st = current.stations;
+  var a = st[0].km, b = st[st.length - 1].km;
+  $("kmRange").textContent = a.toFixed(2) + " – " + b.toFixed(2) + " km";
+  var sl = $("kmSlider");
+  sl.min = a.toFixed(2); sl.max = b.toFixed(2);
+  var v = parseFloat($("kmInput").value);
+  if (!isNaN(v)) sl.value = v;
+}
+
+function refreshAll(keepResult) {
+  updateRange(); renderTable(); drawMap();
+  if (keepResult && lastKm != null) showResult(false);
+}
+
+function renderLog() {
+  var body = $("logBody");
+  body.textContent = "";
+  var has = logs.length > 0;
+  $("logTable").hidden = !has;
+  $("logEmpty").hidden = has;
+  logs.forEach(function (e, i) {
+    var tr = document.createElement("tr");
+    var d = new Date(e.t);
+    function td(text, cls) { var c = document.createElement("td"); if (cls) c.className = cls; c.textContent = text; return c; }
+    tr.appendChild(td(d.toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" }), "mono"));
+    tr.appendChild(td(e.line));
+    tr.appendChild(td(e.km.toFixed(2), "mono"));
+    tr.appendChild(td(e.between));
+    tr.appendChild(td(e.cause, "wrap"));
+    tr.appendChild(td(e.note, "wrap"));
+    var last = document.createElement("td");
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "copy"; b.textContent = "ลบ";
+    b.setAttribute("aria-label", "ลบบันทึกที่ " + (i + 1));
+    b.addEventListener("click", function () { logs.splice(i, 1); saveLogs(); renderLog(); });
+    last.appendChild(b); tr.appendChild(last);
+    body.appendChild(tr);
+  });
+}
+
+function saveEvent() {
+  var msg = $("saveMsg");
+  var km = parseFloat($("kmInput").value);
+  var r = locate(current.stations, km);
+  if (r.error) { msg.textContent = "กรอก km ให้อยู่ในช่วงของสายก่อนบันทึก"; return; }
+  logs.unshift({
+    t: new Date().toISOString(), line: current.short, km: km,
+    between: r.exact ? r.exact.name : r.a.name + " – " + r.b.name,
+    cause: $("cause").value,
+    note: $("note").value.trim(),
+    lat: r.lat, lng: r.lng
+  });
+  if (logs.length > 200) logs.length = 200;
+  saveLogs(); renderLog();
+  msg.textContent = "บันทึกแล้ว";
+  setTimeout(function () { msg.textContent = ""; }, 2000);
+}
+
+function logText() {
+  var rows = ["เวลา\tสาย\tkm\tระหว่างสถานี\tสาเหตุ\tหมายเหตุ\tพิกัด"];
+  logs.forEach(function (e) {
+    rows.push([new Date(e.t).toLocaleString("th-TH"), e.line, e.km.toFixed(2), e.between, e.cause, e.note.replace(/[\t\n]/g, " "),
+               e.lat.toFixed(6) + ", " + e.lng.toFixed(6)].join("\t"));
+  });
+  return rows.join("\n");
+}
+
+function showManual(text) {
+  var ta = $("manualCopy");
+  ta.value = text; ta.hidden = false; ta.focus(); ta.select();
+}
+function copyText(text, btn) {
+  var label = btn.textContent;
+  function done(ok) {
+    btn.textContent = ok ? "คัดลอกแล้ว" : "คัดลอกไม่ได้";
+    setTimeout(function () { btn.textContent = label; }, 1600);
+    if (!ok) showManual(text);
+  }
+  function fallback() {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+    done(ok);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+  } else { fallback(); }
+}
+function bindCopy(root) {
+  Array.prototype.forEach.call(root.querySelectorAll("[data-text]"), function (b) {
+    b.addEventListener("click", function () { copyText(b.getAttribute("data-text"), b); });
+  });
+}
+function routeUrl(st, viaAll) {
+  var o = st[0], d = st[st.length - 1];
+  var u = "https://www.google.com/maps/dir/?api=1&origin=" + o.lat.toFixed(6) + "," + o.lng.toFixed(6) +
+          "&destination=" + d.lat.toFixed(6) + "," + d.lng.toFixed(6);
+  if (viaAll) {
+    var w = st.slice(1, -1).map(function (s) { return s.lat.toFixed(6) + "," + s.lng.toFixed(6); }).join("|");
+    if (w) u += "&waypoints=" + encodeURIComponent(w);
+    u += "&travelmode=driving";
+  } else {
+    u += "&travelmode=transit";
+  }
+  return u;
+}
+function faultRouteUrl(r) {
+  function c(p) { return p.lat.toFixed(6) + "," + p.lng.toFixed(6); }
+  return "https://www.google.com/maps/dir/?api=1&origin=" + c(r.a) + "&destination=" + c(r.b) +
+         "&waypoints=" + encodeURIComponent(c(r)) + "&travelmode=driving";
+}
+function renderRouteLinks() {
+  var box = $("routeLinks");
+  box.textContent = "";
+  $("manualCopy").hidden = true;
+  var st = current.stations;
+  var a2 = document.createElement("a");
+  a2.className = "btn alt"; a2.target = "_blank"; a2.rel = "noopener"; a2.href = routeUrl(st, true);
+  a2.textContent = "เปิดเส้นทางผ่านทุกสถานี";
+  var b = document.createElement("button");
+  b.type = "button"; b.className = "btn alt";
+  b.textContent = "คัดลอกพิกัดทุกสถานี";
+  b.setAttribute("data-text", st.map(function (s) { return s.code + " " + s.name + "\t" + s.lat + ", " + s.lng; }).join("\n"));
+  box.appendChild(a2); box.appendChild(b);
+  bindCopy(box);
+}
+
+function renderSeg() {
+  var seg = $("seg");
+  seg.textContent = "";
+  LINES.forEach(function (l) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-pressed", l === current ? "true" : "false");
+    b.innerHTML = '<span class="dot" style="background:var(--' + l.color + ')"></span>' +
+      '<span><b>' + l.short + '</b> · ' + l.stations.length + ' สถานี<span class="sub">' + l.full + '</span><span class="sub">' + l.route + '</span></span>';
+    b.addEventListener("click", function () { selectLine(l, true); });
+    seg.appendChild(b);
+  });
+}
+
+function selectLine(l, animate) {
+  current = l; lastKm = null; cancelAnim();
+  renderSeg();
+  renderRouteLinks();
+  $("kmInput").value = l.example.toFixed(2);
+  refreshAll(false);
+  showResult(!!animate);
+}
+
+/* ---------- electrical + mechanical analysis ---------- */
+function nv(id) { var v = parseFloat($(id).value); return isNaN(v) ? 0 : v; }
+function cw(id) { return Math.max(260, Math.round($(id).getBoundingClientRect().width) || 560); }
+function countUp(id, to, dec) {
+  var n = $(id); if (!isFinite(to)) { n.textContent = "–"; return; }
+  var from = parseFloat(n.getAttribute("data-v")); n.setAttribute("data-v", to);
+  if (REDUCED || isNaN(from)) { n.textContent = to.toFixed(dec); return; }
+  var t0 = performance.now(), tok = (n._t = (n._t || 0) + 1);
+  (function f(now) { if (n._t !== tok) return; var k = Math.min(1, (now - t0) / 350);
+    n.textContent = (from + (to - from) * (1 - Math.pow(1 - k, 3))).toFixed(dec); if (k < 1) requestAnimationFrame(f); })(t0);
+}
+function elec(d) {
+  var V = nv("e_v") * 1000 * (nv("e_c") || 1), S = nv("e_s") || 1, R = nv("e_r"), X = nv("e_x"), Rf = nv("e_rf");
+  var Zs = Math.pow(nv("e_v"), 2) / S, Rs = Zs / Math.sqrt(101), Xs = 10 * Rs;
+  var Zr = Rs + R * d + Rf, Zx = Xs + X * d, m2 = Zr * Zr + Zx * Zx, mz = Math.sqrt(m2);
+  var Ir = V * Zr / m2, Ii = -V * Zx / m2;
+  var vb = Math.hypot(V - (Ir * Rs - Ii * Xs), Ir * Xs + Ii * Rs);
+  return { I: V / mz, vb: vb, vf: V / mz * Rf };
+}
+function relay(I) {
+  var Ip = nv("e_ip"), T = nv("e_tms"), Ii = nv("e_inst"), tb = 0.06;
+  if (I <= Ip * 1.05) return { t: Infinity, mode: "ต่ำกว่าค่าตั้ง" };
+  if (I >= Ii) return { t: 0.02 + tb, mode: "Instantaneous" };
+  return { t: T * 0.14 / (Math.pow(I / Ip, 0.02) - 1) + tb, mode: "IDMT" };
+}
+function effArea() { return nv("m_a") * (1 - nv("m_wear") / 100); }
+function setLv(id, lv, text) { var n = $(id); n.className = "lv " + lv; n.textContent = text; }
+function recs(id, arr) { $(id).innerHTML = arr.map(function (r) { return '<li class="' + r[0] + '">' + r[1] + '</li>'; }).join(""); }
+var CAUSE_TIP = [null,
+  "สาเหตุที่สงสัยคือวัตถุพาดสาย: ตรวจรอยไหม้ที่ลวด วัตถุแปลกปลอม และรอยอาร์กบนแขนยึดหรือฉนวนบริเวณจุดฟอลต์",
+  "สาเหตุที่สงสัยคือความเสียหายทางกล: ตรวจ dropper, clamp, steady arm และระยะหย่อนของสแปนข้างเคียงทั้งสองฝั่ง",
+  "สาเหตุที่สงสัยคือแพนโทกราฟ: ตรวจคาร์บอนและโครงแพนโทกราฟของขบวนที่ผ่านจุดนี้ก่อนปล่อยรถ",
+  "สาเหตุที่สงสัยคือสภาพอากาศ: ตรวจต้นไม้ใกล้แนวสาย ฉนวนแตกร้าว และร่องรอยฟ้าผ่าที่ตัวล่อฟ้า",
+  "สาเหตุที่สงสัยคือสัตว์หรือสิ่งแปลกปลอม: ตรวจรังนก ซากสัตว์ และเศษวัสดุบนเสาและสายบริเวณใกล้เคียง"];
+var K = {};
+function calcElec() {
+  var ch = $("e_chart");
+  if (lastKm == null) {
+    ["ek_i", "ek_vb", "ek_vf", "ek_t", "ek_e", "ek_m"].forEach(function (i) { $(i).textContent = "–"; $(i).removeAttribute("data-v"); });
+    setLv("e_lv", "", "รอข้อมูล"); recs("e_rec", [["", "กรอก km ที่เกิดฟอลต์ด้านบน ระบบจะคำนวณให้อัตโนมัติ"]]); ch.textContent = ""; return;
+  }
+  var d = Math.max(0, lastKm + nv("e_off")), e = elec(d), tr = relay(e.I);
+  var tt = isFinite(tr.t) ? tr.t : NaN, A = effArea();
+  var i2t = isFinite(tt) ? e.I * e.I * tt : NaN;
+  var allowed = isFinite(tt) ? 143 * A / Math.sqrt(tt) : NaN, mg = allowed / e.I;
+  var dip = (1 - e.vb / (nv("e_v") * 1000 * (nv("e_c") || 1))) * 100;
+  K.i = e.I; K.t = tt; K.vb = e.vb;
+  $("ek_d").textContent = d.toFixed(1);
+  countUp("ek_i", e.I / 1000, 2); countUp("ek_vb", e.vb / 1000, 2); countUp("ek_vf", e.vf / 1000, 2);
+  countUp("ek_t", tt, 2); countUp("ek_e", i2t / 1e6, 2); countUp("ek_m", mg, 2);
+  $("ek_vbs").textContent = "kV · ตก " + dip.toFixed(0) + "%";
+  $("ek_ts").textContent = "s · " + tr.mode;
+  var r = [], lv = "ok", msg = "ระดับความรุนแรง: ต่ำ";
+  function up(l) { if (l === "bad" || (l === "warn" && lv === "ok")) lv = l; }
+  if (!isFinite(tt)) { r.push(["bad", "กระแสต่ำกว่าค่าตั้งรีเลย์ อาจไม่ตัดวงจร (ฟอลต์ความต้านทานสูง) ตรวจค่าตั้งและพิจารณา distance/ΔI protection"]); up("bad"); }
+  else if (tr.t > 1) { r.push(["warn", "เวลาตัดวงจร " + tt.toFixed(2) + " s ค่อนข้างนาน พลังงานอาร์กสะสมสูง ทบทวน TMS และการประสานงานของรีเลย์"]); up("warn"); }
+  else r.push(["ok", "รีเลย์ตัดภายใน ~" + tt.toFixed(2) + " s (" + tr.mode + ")"]);
+  if (isFinite(mg) && mg < 1) { r.push(["bad", "กระแสฟอลต์เกินที่ลวดทนความร้อนได้ (" + mg.toFixed(2) + " เท่า) เสี่ยงลวดอ่อนตัวหรือขาด ตรวจตำแหน่งฟอลต์และเปลี่ยนช่วงที่เสียหายก่อนจ่ายไฟคืน"]); up("bad"); }
+  else if (isFinite(mg) && mg < 1.5) { r.push(["warn", "ขอบความปลอดภัยทางความร้อนของลวดน้อย (" + mg.toFixed(2) + " เท่า) ตรวจรอยไหม้และวัดความตึงหลังเหตุการณ์"]); up("warn"); }
+  var vk = e.vb / 1000;
+  if (vk < 17.5) { r.push(["bad", "แรงดันบัสขณะฟอลต์ " + vk.toFixed(1) + " kV ต่ำกว่า Umin2 17.5 kV (EN 50163) ขบวนรถอื่นในส่วนจ่ายไฟเดียวกันจะลดกำลังหรือตัดวงจร"]); up("warn"); }
+  else if (vk < 19) { r.push(["warn", "แรงดันบัส " + vk.toFixed(1) + " kV อยู่ระหว่าง Umin2 17.5 และ Umin1 19 kV (EN 50163) ยอมรับได้เฉพาะช่วงสั้น"]); up("warn"); }
+  else if (dip > 50) { r.push(["warn", "แรงดันที่บัสตกประมาณ " + dip.toFixed(0) + "% ขบวนอื่นในส่วนจ่ายไฟเดียวกันอาจลดกำลัง"]); up("warn"); }
+  var ci = $("cause").selectedIndex; if (CAUSE_TIP[ci]) r.push(["", CAUSE_TIP[ci]]);
+  r.push(["", "ตำแหน่งจริงอาจคลาดเคลื่อน ±" + nv("tol") + " m ตรวจให้ครอบคลุมช่วงสีเหลืองบนแผนผัง ก่อนส่งไฟคืนต้องตัดไฟ ต่อลงดิน และยืนยันตามขั้นตอนความปลอดภัย"]);
+  setLv("e_lv", lv, lv === "bad" ? "ระดับความรุนแรง: สูง" : lv === "warn" ? "ระดับความรุนแรง: ปานกลาง" : msg);
+  recs("e_rec", r);
+
+  var W = cw("e_chart"), x0 = 40, x1 = W - 16, n = 40, pts = [], I0 = elec(0).I;
+  var Lmax = current.stations[current.stations.length - 1].km + nv("e_off");
+  ch.setAttribute("viewBox", "0 0 " + W + " 170");
+  for (var k = 0; k <= n; k++) { var dd = Lmax * k / n; pts.push([x0 + (x1 - x0) * k / n, 140 - 110 * elec(dd).I / I0]); }
+  var path = pts.map(function (q) { return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" ");
+  var fx = x0 + (x1 - x0) * Math.min(1, d / (Lmax || 1)), fy = 140 - 110 * e.I / I0, py = 140 - 110 * nv("e_ip") / I0;
+  var flip = fx > x0 + (x1 - x0) * 0.55;
+  ch.innerHTML = '<polygon class="ar" points="' + x0 + ',140 ' + path + ' ' + x1 + ',140"/><polyline class="ln" points="' + path + '"/>' +
+    '<line class="rf" x1="' + x0 + '" x2="' + x1 + '" y1="' + py + '" y2="' + py + '"/><text x="' + (x0 + 4) + '" y="' + (py - 4) + '">pickup ' + nv("e_ip") + ' A</text>' +
+    '<line class="bd" x1="' + fx + '" x2="' + fx + '" y1="24" y2="140"/><circle class="mk" cx="' + fx + '" cy="' + fy + '" r="6"/>' +
+    '<text x="' + (flip ? fx - 8 : fx + 8) + '" y="38" text-anchor="' + (flip ? "end" : "start") + '">' + (e.I / 1000).toFixed(2) + ' kA ที่ ' + d.toFixed(1) + ' km</text>' +
+    '<text x="' + x0 + '" y="158">0 km</text><text x="' + x1 + '" y="158" text-anchor="end">' + Lmax.toFixed(1) + ' km</text><text x="4" y="16">สูงสุด ' + (I0 / 1000).toFixed(1) + ' kA</text>';
+}
+function calcMech() {
+  var L = nv("m_l"), T = nv("m_t") || 0.01, T0 = nv("m_t0") || 0.01, w = nv("m_m") * 9.81;
+  var f = w * L * L / (8 * T * 1000), f0 = w * L * L / (8 * T0 * 1000), df = f - f0;
+  var H = nv("m_h"), Hm = H - df, Hmin = nv("m_hmin");
+  var v = nv("m_w") / 3.6, q = 0.5 * 1.225 * v * v * 1.2 * 0.013, y = q * L * L / (8 * T * 1000), lat = nv("m_st") + y, lim = nv("m_lim") || 0.01;
+  var A = effArea(), sf = 330 * A / (T * 1000);
+  K.lat = lat; K.lim = lim; K.sf = sf;
+  countUp("mk_f", f, 3); countUp("mk_d", df * 1000, 0); countUp("mk_h", Hm, 3); countUp("mk_lat", lat, 2); countUp("mk_ar", A, 0); countUp("mk_sf", sf, 2);
+  $("mk_hs").textContent = "m · ขั้นต่ำ " + Hmin.toFixed(2);
+  var r = [], lv = "ok";
+  function up(l) { if (l === "bad" || (l === "warn" && lv === "ok")) lv = l; }
+  if (Hm < Hmin) { r.push(["bad", "ลวดกลางสแปนต่ำกว่าเกณฑ์ " + (Hmin - Hm).toFixed(2) + " m แพนโทกราฟเกี่ยวสายหรือแขนยึดได้ สายอาจขาดหรือถูกดึงลงมา ควรจำกัดความเร็วและปรับความตึงโดยเร็ว"]); up("bad"); }
+  else if (Hm < Hmin + 0.1) { r.push(["warn", "ความสูงใกล้เกณฑ์ขั้นต่ำ (เหลือ " + (Hm - Hmin).toFixed(2) + " m) วางแผนปรับความตึงและตรวจ balance weight"]); up("warn"); }
+  else r.push(["ok", "ความสูงกลางสแปนยังอยู่ในเกณฑ์"]);
+  if (df < -0.02) { r.push(["warn", "สายตึงกว่าออกแบบ (หย่อนน้อยลง " + (-df * 1000).toFixed(0) + " mm) ภาระบนเสาและแขนยึดเพิ่ม ตรวจสลิงและน้ำหนักถ่วงว่าเคลื่อนที่อิสระ"]); up("warn"); }
+  if (lat > lim) { r.push(["bad", "ลวดเบี่ยงรวม " + lat.toFixed(2) + " m เกินช่วงหัวสไลด์ ± " + lim.toFixed(2) + " m ลมแรงอาจทำให้ลวดหลุดขอบแพนโทกราฟ (dewirement)"]); up("bad"); }
+  else if (lat > lim * 0.8) { r.push(["warn", "ลวดเบี่ยงเข้าใกล้ขอบหัวสไลด์ (" + (lat / lim * 100).toFixed(0) + "% ของช่วงใช้งาน) ระวังช่วงลมแรง"]); up("warn"); }
+  if (sf < 1.5) { r.push(["bad", "safety factor " + sf.toFixed(2) + " ต่ำมาก เปลี่ยนลวดช่วงนี้ทันที"]); up("bad"); }
+  else if (sf < 2) { r.push(["warn", "safety factor " + sf.toFixed(2) + " ใกล้เกณฑ์ตัวอย่าง (2.0) วางแผนเปลี่ยนลวดและตรวจจุดสึกสูงสุด"]); up("warn"); }
+  if (nv("m_wear") >= 20) { r.push([nv("m_wear") >= 30 ? "bad" : "warn", "ลวดสึก " + nv("m_wear") + "% เกินเกณฑ์เฝ้าระวังตัวอย่าง (20%) ลวดบางลงทำให้ทนความร้อนและแรงดึงลดลง"]); up(nv("m_wear") >= 30 ? "bad" : "warn"); }
+  setLv("m_lv", lv, lv === "bad" ? "ระดับความเสี่ยงสายขาด/แพนโทกราฟเกี่ยว: สูง" : lv === "warn" ? "ระดับความเสี่ยง: เฝ้าระวัง" : "ระดับความเสี่ยง: ต่ำ");
+  recs("m_rec", r);
+
+  var W = cw("m_chart"), x0 = 36, x1 = W - 36, xm = (x0 + x1) / 2;
+  var hi = H + 0.15, lo = Math.min(Hmin, Hm) - 0.15, sc = 120 / (hi - lo), Y = function (h) { return 20 + (hi - h) * sc; };
+  var c = [], k; for (k = 0; k <= 30; k++) { var s = k / 30; c.push((x0 + (x1 - x0) * s).toFixed(1) + "," + Y(H - df * 4 * s * (1 - s)).toFixed(1)); }
+  $("m_chart").setAttribute("viewBox", "0 0 " + W + " 170");
+  $("m_chart").innerHTML = '<line class="rf" x1="' + x0 + '" x2="' + x1 + '" y1="' + Y(H) + '" y2="' + Y(H) + '"/><line class="bd" x1="' + x0 + '" x2="' + x1 + '" y1="' + Y(Hmin) + '" y2="' + Y(Hmin) + '"/>' +
+    '<polyline class="ln" points="' + c.join(" ") + '"/><line class="rf" x1="' + x0 + '" x2="' + x0 + '" y1="14" y2="150"/><line class="rf" x1="' + x1 + '" x2="' + x1 + '" y1="14" y2="150"/>' +
+    '<circle class="mk" cx="' + xm + '" cy="' + Y(Hm) + '" r="6"/><text x="' + (x0 + 6) + '" y="' + (Y(H) - 4) + '">ออกแบบ ' + H.toFixed(2) + ' m</text><text x="' + (x0 + 6) + '" y="' + (Y(Hmin) + 13) + '">ขั้นต่ำ ' + Hmin.toFixed(2) + ' m</text>' +
+    '<text x="' + xm + '" y="' + (Y(Hm) + 18) + '" text-anchor="middle">กลางสแปน ' + Hm.toFixed(2) + ' m</text><text x="' + x0 + '" y="164" text-anchor="middle">เสา</text><text x="' + x1 + '" y="164" text-anchor="middle">เสา</text>';
+}
+
+var ICONS = { bolt: "M13 2L4 14h7l-1 8 9-12h-7z", grid: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z", pin: "M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11zM12 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z",
+  sliders: "M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4", shield: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z", list: "M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01",
+  clock: "M12 7v5l3 2M12 21a9 9 0 100-18 9 9 0 000 18z", table: "M4 5h16v14H4zM4 10h16M10 5v14" };
+function injectIcons() {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-ic]"), function (n) {
+    n.insertAdjacentHTML("afterbegin", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + ICONS[n.getAttribute("data-ic")] + '"/></svg>');
+  });
+}
+function lvTxt(id, src) {
+  var c = $(src).className, n = $(id), k = c.indexOf("bad") > -1 ? "bad" : c.indexOf("warn") > -1 ? "warn" : c.indexOf("ok") > -1 ? "ok" : "";
+  n.textContent = k === "bad" ? "สูง" : k === "warn" ? "เฝ้าระวัง" : k === "ok" ? "ต่ำ" : "–"; n.className = "v " + k;
+}
+function gauge(id, pct) {
+  var g = $(id); g.setAttribute("stroke-dasharray", Math.max(0, Math.min(100, pct)) + " 100");
+  g.parentNode.setAttribute("class", "gsv " + (pct >= 100 ? "bad" : pct >= 80 ? "warn" : "ok")); $(id + "p").textContent = pct.toFixed(0) + "%";
+}
+function vbar(vk) {
+  var W = cw("e_vbar");
+  $("e_vbar").setAttribute("viewBox", "0 0 " + W + " 62");
+  var X = function (v) { return 16 + (Math.max(15, Math.min(30, v)) - 15) / 15 * (W - 32); };
+  var z = [[15, 17.5, "zb"], [17.5, 19, "zw"], [19, 27.5, "zg"], [27.5, 29, "zw"], [29, 30, "zb"]];
+  var h = z.map(function (q) { return '<rect class="' + q[2] + '" x="' + X(q[0]).toFixed(1) + '" y="22" width="' + (X(q[1]) - X(q[0])).toFixed(1) + '" height="12"/>'; }).join("");
+  h += [17.5, 19, 25, 27.5, 29].map(function (v) { return '<text x="' + X(v).toFixed(1) + '" y="52" text-anchor="middle">' + v + '</text>'; }).join("");
+  if (vk != null) h += '<path class="vm" d="M' + X(vk).toFixed(1) + ' 36l-6-12h12z"/><text class="vt" x="' + Math.min(Math.max(X(vk), 62), W - 62).toFixed(1) + '" y="14" text-anchor="middle">' + vk.toFixed(1) + ' kV ขณะฟอลต์</text>';
+  $("e_vbar").innerHTML = h;
+}
+function extras() {
+  var r = lastKm == null ? null : locate(current.stations, lastKm);
+  $("k_line").textContent = current.short;
+  $("k_km").textContent = r ? lastKm.toFixed(2) + " km" : "–";
+  $("k_seg").textContent = r ? (r.exact ? r.exact.name : r.a.name + " – " + r.b.name) : "–";
+  $("k_i").textContent = r && isFinite(K.i) ? (K.i / 1000).toFixed(2) + " kA" : "–";
+  $("k_t").textContent = r && isFinite(K.t) ? K.t.toFixed(2) + " s" : "–";
+  lvTxt("k_e", "e_lv"); lvTxt("k_r", "m_lv");
+  $("ov").innerHTML = r ? '<div class="oc"><span>ตำแหน่งฟอลต์</span><b>km ' + lastKm.toFixed(2) + '</b><small>' + r.a.name + ' ' + r.dA.toFixed(2) + ' km · ' + r.dB.toFixed(2) + ' km ' + r.b.name + '</small></div>' +
+    '<div class="oc b"><span>กระแสลัดวงจร</span><b>' + (K.i / 1000).toFixed(2) + ' kA</b><small>' + (isFinite(K.t) ? "ตัดวงจร ~" + K.t.toFixed(2) + " s" : "รีเลย์ไม่ตัด") + '</small></div>' : "";
+  vbar(r ? K.vb / 1000 : null);
+  gauge("g_lat", K.lat / K.lim * 100); gauge("g_sf", 100 / K.sf);
+}
+function calcAll() { calcElec(); calcMech(); extras(); }
+function tickClock() { $("clock").textContent = new Date().toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }); }
+
+/* ---------- PM checklist ---------- */
+var PM = [["ตรวจเดินสายทั้งแนว (หย่อน คลาด หลุด วัตถุพาดสาย)", "ทุกเดือน"], ["ตรวจคาร์บอนแพนโทกราฟร่วมกับฝ่ายรถ", "ทุกเดือน"], ["ตัดแต่งต้นไม้และตรวจสิ่งแปลกปลอมใกล้แนวสาย", "ก่อนฤดูฝน"],
+  ["วัดความสูงและ stagger ของ contact wire", "6 เดือน"], ["วัดความสึกหรอ (mm²) ของ contact wire", "6 เดือน"], ["ตรวจน้ำหนักถ่วงและสลิงปรับความตึงอัตโนมัติ", "6 เดือน"],
+  ["ตรวจ dropper, clamp, steady arm, เสาและฐานราก", "ปีละครั้ง"], ["ทำความสะอาดและตรวจฉนวน", "ปีละครั้ง"], ["ตรวจ section insulator, ระบบต่อลงดินและ bonding", "ปีละครั้ง"], ["ทดสอบรีเลย์ป้องกันและสอบเทียบ Fault Locator", "ปีละครั้ง"]];
+var PMKEY = "ocs-pm-v1", pmDone = {};
+try { pmDone = JSON.parse(localStorage.getItem(PMKEY) || "{}") || {}; } catch (e) {}
+function pmUpdate() {
+  var n = PM.filter(function (_, i) { return pmDone[i]; }).length, pct = Math.round(n / PM.length * 100);
+  $("pmPct").textContent = pct + "% (" + n + "/" + PM.length + ")"; $("pmBar").style.width = pct + "%";
+  try { localStorage.setItem(PMKEY, JSON.stringify(pmDone)); } catch (e) {}
+}
+function buildPM() {
+  var box = $("pmList"); box.textContent = "";
+  PM.forEach(function (it, i) {
+    var l = document.createElement("label"); l.className = "chk";
+    l.innerHTML = '<input type="checkbox"' + (pmDone[i] ? " checked" : "") + '><span>' + it[0] + '<em>' + it[1] + '</em></span>';
+    l.firstChild.addEventListener("change", function (e) { pmDone[i] = e.target.checked; pmUpdate(); });
+    box.appendChild(l);
+  });
+  pmUpdate();
+}
+
+/* ---------- map picking ---------- */
+function mapHit(e) {
+  var svg = $("map"), r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, sc = Math.min(r.width / vb.width, r.height / vb.height);
+  var x = (e.clientX - r.left - (r.width - vb.width * sc) / 2) / sc, y = (e.clientY - r.top - (r.height - vb.height * sc) / 2) / sc, st = current.stations, best = null;
+  for (var i = 0; i < st.length - 1; i++) {
+    var a = proj(st[i].lat, st[i].lng), b = proj(st[i + 1].lat, st[i + 1].lng), dx = b.x - a.x, dy = b.y - a.y;
+    var t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+    var dist = Math.hypot(x - (a.x + dx * t), y - (a.y + dy * t));
+    if (!best || dist < best.dist) best = { dist: dist * sc, km: st[i].km + (st[i + 1].km - st[i].km) * t, a: st[i], b: st[i + 1] };
+  }
+  return best;
+}
+
+/* ---------- cursor: small red filled ring follows closely, larger gold outline ring trails behind ---------- */
+function setupCursor() {
+  var fine = window.matchMedia && window.matchMedia("(hover:hover) and (pointer:fine)").matches;
+  if (!fine || REDUCED) return;
+  var root = document.documentElement;
+  function mk(cls) { var d = document.createElement("div"); d.className = "cur " + cls; d.appendChild(document.createElement("i")); document.body.appendChild(d); return d; }
+  var gold = mk("cur-gold"), dot = mk("cur-dot");
+  root.classList.add("cx");
+  var mx = 0, my = 0, dx = 0, dy = 0, gx = 0, gy = 0, seen = false, last = performance.now();
+  var HOV = "a,button,input,select,textarea,summary,label,[role=button],#map";
+  document.addEventListener("mousemove", function (e) {
+    mx = e.clientX; my = e.clientY;
+    if (!seen) { seen = true; dx = gx = mx; dy = gy = my; root.classList.add("cx-on"); }
+    root.classList.toggle("cx-hov", !!(e.target.closest && e.target.closest(HOV)));
+  }, { passive: true });
+  document.addEventListener("mousedown", function () { root.classList.add("cx-down"); });
+  document.addEventListener("mouseup", function () { root.classList.remove("cx-down"); });
+  root.addEventListener("mouseleave", function () { root.classList.remove("cx-on"); });
+  root.addEventListener("mouseenter", function () { if (seen) root.classList.add("cx-on"); });
+  (function loop(now) {
+    var dt = Math.min(64, now - last) / 16.67; last = now;
+    var kd = 1 - Math.pow(1 - 0.3, dt), kg = 1 - Math.pow(1 - 0.14, dt);
+    dx += (mx - dx) * kd; dy += (my - dy) * kd;
+    gx += (mx - gx) * kg; gy += (my - gy) * kg;
+    dot.style.transform = "translate3d(" + dx.toFixed(2) + "px," + dy.toFixed(2) + "px,0)";
+    gold.style.transform = "translate3d(" + gx.toFixed(2) + "px," + gy.toFixed(2) + "px,0)";
+    requestAnimationFrame(loop);
+  })(last);
+}
+
+function setupInteractions() {
+  var tip = document.createElement("div"); tip.className = "tip"; document.body.appendChild(tip);
+  var map = $("map"), coarse = window.matchMedia && window.matchMedia("(pointer:coarse)").matches, TH = coarse ? 44 : 30;
+  map.addEventListener("mousemove", function (e) {
+    var h = proj && mapHit(e);
+    if (h && h.dist < TH) { tip.textContent = "km " + h.km.toFixed(2) + " · " + h.a.name + " – " + h.b.name + " (คลิกเพื่อเลือก)"; tip.style.transform = "translate(" + (e.clientX + 16) + "px," + (e.clientY + 16) + "px)"; tip.classList.add("on"); map.style.cursor = "pointer"; }
+    else { tip.classList.remove("on"); map.style.cursor = "crosshair"; }
+  });
+  map.addEventListener("mouseleave", function () { tip.classList.remove("on"); });
+  map.addEventListener("click", function (e) {
+    var h = proj && mapHit(e); if (!h || h.dist >= TH) return;
+    $("kmInput").value = h.km.toFixed(2); $("kmSlider").value = h.km; showResult(true);
+  });
+  ["e_v", "e_c", "e_s", "e_off", "e_r", "e_x", "e_rf", "e_ip", "e_tms", "e_inst", "m_l", "m_t0", "m_t", "m_m", "m_h", "m_hmin", "m_a", "m_wear", "m_w", "m_st", "m_lim", "cause"].forEach(function (id) {
+    $(id).addEventListener("input", calcAll); $(id).addEventListener("change", calcAll);
+  });
+}
+
+(function init() {
+  var sel = $("cause");
+  CAUSES.forEach(function (c) { var o = document.createElement("option"); o.value = c; o.textContent = c; sel.appendChild(o); });
+  var km = $("kmInput"), sl = $("kmSlider");
+  $("goBtn").addEventListener("click", function () { showResult(true); });
+  km.addEventListener("keydown", function (e) { if (e.key === "Enter") showResult(true); });
+  km.addEventListener("input", function () { var v = parseFloat(km.value); if (!isNaN(v)) sl.value = v; });
+  var pend = false;
+  sl.addEventListener("input", function () {
+    km.value = parseFloat(sl.value).toFixed(2);
+    if (pend) return; pend = true;
+    requestAnimationFrame(function () { pend = false; showResult(false, true); });
+  });
+  $("tol").addEventListener("input", function () { if (lastKm != null) drawFault({ drop: false }); });
+  $("saveBtn").addEventListener("click", saveEvent);
+  $("resetBtn").addEventListener("click", function () {
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    LINES.forEach(function (l) { fillKm(l.stations); });
+    refreshAll(true);
+  });
+  $("pmReset").addEventListener("click", function () { pmDone = {}; buildPM(); });
+  var lc = $("logCopy");
+  lc.addEventListener("click", function () { copyText(logText(), lc); });
+  $("logClear").addEventListener("click", function () { logs = []; saveLogs(); renderLog(); });
+  renderLog();
+  injectIcons(); buildPM();
+  selectLine(LINES[0], false);
+  setupInteractions(); setupCursor(); tickClock(); setInterval(tickClock, 30000);
+
+  var links = document.querySelectorAll("#nav a"), nav = $("nav");
+  function mark(id) {
+    Array.prototype.forEach.call(links, function (a) {
+      var on = a.getAttribute("data-sec") === id;
+      a.classList.toggle("on", on);
+      if (on && nav.scrollWidth > nav.clientWidth + 2) { try { nav.scrollTo({ left: Math.max(0, a.offsetLeft - nav.offsetLeft - 16), behavior: REDUCED ? "auto" : "smooth" }); } catch (e) {} }
+    });
+  }
+  if ("IntersectionObserver" in window) {
+    var spy = new IntersectionObserver(function (es) { es.forEach(function (x) { if (x.isIntersecting) mark(x.target.id); }); }, { rootMargin: "-25% 0px -65% 0px" });
+    ["top", "locate", "elec", "mech", "pm", "stations", "log"].forEach(function (i) { spy.observe($(i)); });
   }
 
-  document.querySelectorAll('a, button, .portfolio-item, .service-card, .price-card, input, textarea, select, .zoom-btn, .lightbox-close').forEach(el => {
-    el.addEventListener('mouseenter', () => {
-      cursor.classList.add('hover');
-      cursorRing.classList.add('hover');
-    });
-    el.addEventListener('mouseleave', () => {
-      cursor.classList.remove('hover');
-      cursorRing.classList.remove('hover');
-    });
+  /* redraw map and charts at real size when the window width changes (rotate, resize) */
+  var lastVW = window.innerWidth, rt;
+  window.addEventListener("resize", function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () {
+      if (window.innerWidth === lastVW) return;
+      lastVW = window.innerWidth;
+      cancelAnim(); drawMap(); calcAll();
+    }, 150);
   });
-
-  // Navbar scroll
-  const navbar = document.getElementById('navbar');
-  window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 60);
-  });
-
-  // Portfolio tabs
-  document.querySelectorAll('.ptab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.portfolio-panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      const panel = document.getElementById('panel-' + tab.dataset.panel);
-      if (panel) panel.classList.add('active');
-    });
-  });
-
-  // Pricing toggle
-  document.querySelectorAll('.ptoggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.ptoggle').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.pricing-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      const panel = document.getElementById('pricing-' + btn.dataset.pricing);
-      if (panel) panel.classList.add('active');
-    });
-  });
-
-  // Scroll reveal
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-  // Smooth scroll for anchors
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      const target = document.querySelector(a.getAttribute('href'));
-      if (target) target.scrollIntoView({ behavior: 'smooth' });
-    });
-  });
-
-  // --- โค้ด: ทำให้คลิก Services แล้วเปิดแท็บ Portfolio ที่ถูกต้อง ---
-  document.querySelectorAll('.service-link').forEach(link => {
-    link.addEventListener('click', e => {
-      const targetId = link.getAttribute('data-target'); // เช่น 'char', 'chibi'
-      
-      // ล้างสถานะ active ของแท็บทั้งหมด
-      document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.portfolio-panel').forEach(p => p.classList.remove('active'));
-      
-      // ไปหาปุ่มแท็บที่ตรงกันแล้วเติม active
-      const targetTab = document.querySelector(`.ptab[data-panel="${targetId}"]`);
-      if (targetTab) {
-        targetTab.classList.add('active');
-      }
-      
-      // ไปหาหน้าต่างผลงานที่ตรงกันแล้วเติม active
-      const targetPanel = document.getElementById('panel-' + targetId);
-      if (targetPanel) {
-        targetPanel.classList.add('active');
-      }
-    });
-  });
-
-  const lightbox = document.getElementById('image-lightbox');
-  const lightboxImg = document.getElementById('lightbox-img');
-  const lightboxClose = document.getElementById('lightbox-close');
-
-  document.querySelectorAll('.zoom-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.preventDefault();  
-      e.stopPropagation(); 
-      
-      const imgSrc = btn.getAttribute('data-img');
-      if (imgSrc) {
-        lightboxImg.src = imgSrc;
-        lightbox.classList.add('active');
-      }
-    });
-  });
-
-  // ปิดหน้าต่างเมื่อกดกากบาท หรือคลิกที่พื้นที่สีดำ
-  const closeLightbox = () => lightbox.classList.remove('active');
-  if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
-  if (lightbox) lightbox.addEventListener('click', e => {
-    if (e.target === lightbox) closeLightbox(); 
-  });
-
-  //ระบบคลิกรูปใน Portfolio เพื่อดูภาพขยาย
-  document.querySelectorAll('.portfolio-item').forEach(item => {
-    item.addEventListener('click', e => {
-      // ค้นหารูปภาพที่อยู่ข้างในกล่องที่ถูกคลิก
-      const img = item.querySelector('img');
-      
-      if (img) {
-        // เอากลับไปใส่ในหน้าต่าง Lightbox ที่มีอยู่แล้ว
-        lightboxImg.src = img.src;
-        lightbox.classList.add('active');
-      }
-    });
-  });
+})();
 </script>
-</body>
-</html>
+
+</body></html>
